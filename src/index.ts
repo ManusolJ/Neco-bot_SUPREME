@@ -1,5 +1,5 @@
 import { Client, GatewayIntentBits } from "discord.js";
-import connectToDB from "./db";
+import { necoClient } from "./db";
 
 const client = new Client({
   intents: [
@@ -13,7 +13,6 @@ const client = new Client({
   ],
 });
 
-await connectToDB();
 // const necoService = new NecoService();
 
-await client.login(process.env.CONFIG.BOT_TOKEN);
+await client.login(process.env.BOT_TOKEN);
