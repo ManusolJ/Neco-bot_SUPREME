@@ -50,7 +50,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const msg = RandomMessageBuilder(data.name, target);
+  const replyMsg = RandomMessageBuilder(data.name, target);
   const files = path.resolve(path.join(IMAGE_PATH + IMAGE_CHEER));
-  return await interactionService.filesReply(msg, [files]);
+  return await interactionService.filesReply(replyMsg, [files]);
 }

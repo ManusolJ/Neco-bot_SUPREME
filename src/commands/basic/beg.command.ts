@@ -1,7 +1,6 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
 
-import type ChaosAgent from "@interfaces/agent.interface";
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
 import RandomMessageBuilder from "@utils/build-random-message.util";
@@ -32,7 +31,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const author = interaction.user;
     const member = await interaction.guild.members.fetch(author.id);
 
-    if (!author) {
+    if (!author || !member) {
       const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
       return await interactionService.errorReply(errorMsg);
     }
@@ -79,9 +78,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);
     await necoService.manipulateAgentNecoins(author.id, agent.necoins + awarded);
-    const reply = `${RandomMessageBuilder("beg", author)} ${awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`}`;
+    const replyMsg = `${RandomMessageBuilder(data.name, author)} ${
+      awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
+    }`;
 
-    return await interactionService.standardReply(reply);
+    return await interactionService.standardReply(replyMsg);
   } finally {
     unlockUser(interaction.user.id);
   }

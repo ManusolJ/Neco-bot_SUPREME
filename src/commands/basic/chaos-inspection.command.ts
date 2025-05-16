@@ -4,7 +4,7 @@ import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
 
 export const data = new SlashCommandBuilder()
-  .setName("inspection")
+  .setName("chaos-inspection")
   .setDescription("Inspecciona las cola y bolas de alguien (Las monedas que tiene).")
   .addUserOption((option) =>
     option
@@ -41,7 +41,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.feedbackReply(feedbackMsg);
   } else {
     const coins = agent.necoins;
-    const msg = `Veamos, el schizo elegido tiene...${coins > 1 ? `${coins} monedas` : "1 moneda! LMAO, krill issue."}`;
-    return hidden ? await interactionService.feedbackReply(msg) : await interactionService.standardReply(msg);
+    const replyMsg = `Veamos, el schizo elegido tiene...${
+      coins > 1 ? `${coins} monedas` : "1 moneda! LMAO, krill issue."
+    }`;
+    return hidden ? await interactionService.feedbackReply(replyMsg) : await interactionService.standardReply(replyMsg);
   }
 }
