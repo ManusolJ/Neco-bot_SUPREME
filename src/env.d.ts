@@ -24,15 +24,6 @@ declare global {
       NECO_ALTAR_CHANNEL: string;
 
       COPYPASTA_URL: string;
-
-      BAREN_CLAP: string;
-      BAREN_FACE: string;
-      NECO_MOCK: string;
-      NECO_CRY: string;
-      NECO_SCOLD: string;
-      NECO_YEAH: string;
-      NECO_DANCE: string;
-      NECO_GANG: string;
     }
   }
 }
