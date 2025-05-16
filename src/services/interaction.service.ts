@@ -28,7 +28,16 @@ export default class InteractionService {
     return this.handleResponse({ content });
   }
 
-  async feedbackReply(content: string) {
+  async feedbackReply(content: string, files: string[] | null = null) {
+    if (files) {
+      const images = files.map((file) => new AttachmentBuilder(file));
+      return this.handleResponse({
+        content,
+        files: images,
+        flags: "Ephemeral",
+      });
+    }
+
     return this.handleResponse({
       content,
       flags: "Ephemeral",
