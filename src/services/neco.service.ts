@@ -1,6 +1,5 @@
 import { Connection, ResultSetHeader } from "mysql2/promise";
 
-import type AgentRow from "@interfaces/agent-row.interface";
 import type ChaosAgent from "@interfaces/agent.interface";
 
 import necoClient from "src/db";
@@ -24,22 +23,22 @@ export default class NecoService {
 
   async getAgent(id: string): Promise<ChaosAgent | null> {
     const sql = `SELECT * FROM ${AGENT_TABLE} WHERE id = ?`;
-    const [rows] = await this.con.execute<AgentRow[]>(sql, [id]);
+    const [rows] = await this.con.execute<ChaosAgent[]>(sql, [id]);
 
     if (!rows || rows.length === 0) return null;
 
-    return this.mapRowToAgent(rows[0]);
+    return rows[0];
   }
 
   async getAllAgents(): Promise<ChaosAgent[] | null> {
     const agents: ChaosAgent[] = [];
     const sql = `SELECT * FROM ${AGENT_TABLE}`;
 
-    const [rows] = await this.con.query<AgentRow[]>(sql);
+    const [rows] = await this.con.query<ChaosAgent[]>(sql);
 
     if (!rows || rows.length === 0) return null;
 
-    rows.forEach((row) => agents.push(this.mapRowToAgent(row)));
+    rows.forEach((row) => agents.push(row));
 
     return agents;
   }
@@ -51,14 +50,14 @@ export default class NecoService {
     return result.affectedRows !== 0;
   }
 
-  async manipulateChaos(id: string, points: number): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET chaos = ? WHERE id = ?`;
+  async manipulateAgentNecoins(id: string, points: number): Promise<boolean> {
+    const sql = `UPDATE ${AGENT_TABLE} SET necoins = ? WHERE id = ?`;
     const [result] = await this.con.execute<ResultSetHeader>(sql, [points, id]);
 
     return result.affectedRows !== 0;
   }
 
-  async manipulateShame(id: string, shame: number): Promise<boolean> {
+  async manipulateAgentShame(id: string, shame: number): Promise<boolean> {
     const sql = `UPDATE ${AGENT_TABLE} SET shame_counter = ? WHERE id = ?`;
     const [result] = await this.con.execute<ResultSetHeader>(sql, [shame, id]);
 
@@ -86,20 +85,10 @@ export default class NecoService {
     return result.affectedRows !== 0;
   }
 
-  async resetAgentsChaos(): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET chaos = 0`;
+  async resetGlobalChaos(): Promise<boolean> {
+    const sql = `UPDATE ${AGENT_TABLE} SET necoins = 0`;
     const [result] = await this.con.execute<ResultSetHeader>(sql);
 
     return result.affectedRows !== 0;
-  }
-
-  private mapRowToAgent(row: AgentRow): ChaosAgent {
-    return {
-      id: row.id,
-      chaos: row.chaos,
-      begUsed: row.beg_used,
-      roleImposed: row.role_imposed,
-      ShameCounter: row.shame_counter,
-    };
   }
 }
