@@ -9,11 +9,9 @@ import {
 } from "discord.js";
 
 import path from "path";
+import fs from "fs";
 
-const getErrorImage = () => {
-  const imagePath = path.resolve("public/img/error.jpg");
-  return new AttachmentBuilder(imagePath);
-};
+const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 export default class InteractionService {
   private interaction: ChatInputCommandInteraction;
@@ -53,10 +51,11 @@ export default class InteractionService {
   }
 
   async errorReply(content: string) {
+    const errorImage = this.loadErrorImage();
     return this.handleResponse({
       content,
       flags: "Ephemeral",
-      files: [getErrorImage()],
+      files: errorImage ? [errorImage] : undefined,
     });
   }
 
@@ -128,5 +127,16 @@ export default class InteractionService {
       console.error("Reply failed:", error);
       throw error;
     }
+  }
+
+  private loadErrorImage(): AttachmentBuilder | null {
+    try {
+      if (fs.existsSync(DEFAULT_ERROR_IMAGE_PATH)) {
+        return new AttachmentBuilder(DEFAULT_ERROR_IMAGE_PATH);
+      }
+    } catch (e) {
+      console.warn("Error image not found or unreadable:", e);
+    }
+    return null;
   }
 }
