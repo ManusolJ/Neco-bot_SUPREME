@@ -42,10 +42,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   } catch (e) {
     const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
     console.error(errorMsg, e);
-    return;
+    return await interactionService.errorReply(errorMsg);
   }
 
   const replyMsg = `Ohoo~? Bueno ${target}, eso es interesante pero...`;
   const imagePath = path.resolve("public/img/care.jpg");
-  interactionService.filesReply(replyMsg, [imagePath]);
+  return await interactionService.filesReply(replyMsg, [imagePath]);
 }
