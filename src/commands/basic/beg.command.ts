@@ -25,18 +25,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   try {
     if (!interaction.inGuild() || !interaction.guild) {
-      return await interactionService.errorReply("NYAAAHA! Este comando solo puede usar en el servidor!");
+      const errorMsg = "NYAAAHA! Este comando solo puede usar en el servidor!";
+      return await interactionService.errorReply(errorMsg);
     }
 
     const author = interaction.user;
     const member = await interaction.guild.members.fetch(author.id);
 
     if (!author) {
-      return await interactionService.errorReply("NYAAAHA! Hubo un problema intentado recuperar tu informacion.");
+      const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
+      return await interactionService.errorReply(errorMsg);
     }
 
     if (isUserLocked(author.id)) {
-      return await interactionService.feedbackReply("¡Ya estas pidiendo! Espera a que termine, impaciente.");
+      const feedbackMsg = "¡Ya estas pidiendo! Espera a que termine, impaciente.";
+      return await interactionService.feedbackReply(feedbackMsg);
     }
 
     lockUser(author.id);
@@ -63,7 +66,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     let success = Math.random() < 0.8;
-    if (!success && member.roles.cache.has(process.env.CULTIST_ROLE!)) {
+    if (!success && member.roles.cache.has(process.env.CULTIST_ROLE)) {
       success = Math.random() < 0.6;
     }
 
