@@ -1,10 +1,15 @@
+import "dotenv/config";
 import { REST, Routes, type RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js";
 import { readdir } from "fs/promises";
+import { fileURLToPath, pathToFileURL } from "url";
 import path from "path";
 
 const green = (msg: string) => `\x1b[32m${msg}\x1b[0m`;
 const red = (msg: string) => `\x1b[31m${msg}\x1b[0m`;
 const yellow = (msg: string) => `\x1b[33m${msg}\x1b[0m`;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 
@@ -27,7 +32,8 @@ const commandFiles = await getAllCommandFiles(commandsPath);
 
 for (const file of commandFiles) {
   try {
-    const commandModule = await import(file);
+    const commandModule = await import(pathToFileURL(file).href);
+
     const command = commandModule.default ?? commandModule;
 
     if ("data" in command && "execute" in command) {

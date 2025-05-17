@@ -1,8 +1,7 @@
 import { Connection, ResultSetHeader } from "mysql2/promise";
 
 import type ChaosAgent from "@interfaces/agent.interface";
-
-import necoClient from "src/db";
+import { getDb } from "src/db";
 
 const AGENT_TABLE = "chaos_agents";
 
@@ -10,13 +9,14 @@ export default class NecoService {
   private static instance: NecoService;
   private con: Connection;
 
-  private constructor() {
-    this.con = necoClient;
+  private constructor(con: Connection) {
+    this.con = con;
   }
 
-  static getInstance(): NecoService {
+  static async getInstance(): Promise<NecoService> {
     if (!NecoService.instance) {
-      NecoService.instance = new NecoService();
+      const connection = await getDb();
+      NecoService.instance = new NecoService(connection);
     }
     return NecoService.instance;
   }
