@@ -1,3 +1,4 @@
+import loadAllEvents from "@utils/event-loader.util";
 import { Client, GatewayIntentBits } from "discord.js";
 
 const client = new Client({
@@ -11,5 +12,7 @@ const client = new Client({
     GatewayIntentBits.DirectMessages,
   ],
 });
+
+await loadAllEvents(client);
 
 await client.login(process.env.BOT_TOKEN);
