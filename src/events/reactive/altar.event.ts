@@ -1,4 +1,4 @@
-import type { Client } from "discord.js";
+import { Client, Events } from "discord.js";
 
 import NecoService from "@services/neco.service";
 import MessageService from "@services/message.service";
@@ -7,12 +7,13 @@ import chaosBuilder from "@utils/build-chaos.util";
 import reactionBuilder from "@utils/build-reaction.util";
 
 export default function altarEvent(client: Client): void {
-  client.on("messageCreate", async (message) => {
+  client.on(Events.MessageCreate, async (message) => {
     if (message && message.channelId === process.env.NECO_ALTAR_CHANNEL) {
       const necoService = NecoService.getInstance();
       const author = message.author;
+      const guild = message.guild;
 
-      if (author.bot) return;
+      if (author.bot || !guild) return;
 
       const hasMedia = message.embeds.length > 0 || message.attachments.size > 0;
       const hasTwitterLink = /https?:\/\/(x|twitter|vxtwitter)\.com\/\S+/i.test(message.content);
@@ -20,9 +21,9 @@ export default function altarEvent(client: Client): void {
 
       if (!isPost) return;
 
-      const channel = message.channel;
+      const channel = guild.channels.cache.get(message.channel.id);
 
-      if (!channel || channel.isTextBased() || !message.guild) return;
+      if (!channel || !channel.isTextBased()) return;
 
       const msgService = new MessageService(channel);
 
@@ -34,12 +35,12 @@ export default function altarEvent(client: Client): void {
 
       try {
         await msgService.send(msg);
+        await reactionBuilder(message);
       } catch (e) {
         console.error(e);
         const errorMsg = "...Pero no he podido darte puntos! No preguntes porque, no lo se! Nyahahaahaha!";
         await msgService.sendError(msg + errorMsg);
       }
-      await reactionBuilder(message);
     }
   });
 }

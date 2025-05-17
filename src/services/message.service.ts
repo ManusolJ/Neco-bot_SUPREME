@@ -1,10 +1,9 @@
 import {
-  TextBasedChannel,
   MessageCreateOptions,
   MessagePayload,
   EmbedBuilder,
   AttachmentBuilder,
-  TextChannel,
+  GuildTextBasedChannel,
 } from "discord.js";
 import path from "path";
 import fs from "fs";
@@ -12,9 +11,9 @@ import fs from "fs";
 const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 export default class ChannelMessageService {
-  private channel: TextChannel;
+  private channel: GuildTextBasedChannel;
 
-  constructor(channel: TextChannel) {
+  constructor(channel: GuildTextBasedChannel) {
     this.channel = channel;
   }
 
