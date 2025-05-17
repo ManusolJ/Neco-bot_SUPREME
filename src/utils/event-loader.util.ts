@@ -4,7 +4,7 @@ import type { Client } from "discord.js";
 import path from "path";
 
 async function loadAllEvents(client: Client): Promise<void> {
-  const eventsDir = path.resolve(process.cwd(), "src/events");
+  const eventsPath = path.resolve(__dirname, "../events");
 
   async function walk(dir: string) {
     const entries = await readdir(dir, { withFileTypes: true });
@@ -32,7 +32,7 @@ async function loadAllEvents(client: Client): Promise<void> {
     }
   }
 
-  await walk(eventsDir);
+  await walk(eventsPath);
 }
 
 export default loadAllEvents;
