@@ -1,8 +1,4 @@
-import {
-  REST,
-  Routes,
-  type RESTPostAPIChatInputApplicationCommandsJSONBody,
-} from "discord.js";
+import { REST, Routes, type RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js";
 import { readdir } from "fs/promises";
 import path from "path";
 
@@ -36,17 +32,10 @@ for (const file of commandFiles) {
 
     if ("data" in command && "execute" in command) {
       commands.push(command.data.toJSON());
-      console.log(
-        green(`[COMMAND] Loaded: ${path.relative(commandsPath, file)}`)
-      );
+      console.log(green(`[COMMAND] Loaded: ${path.relative(commandsPath, file)}`));
     } else {
       console.warn(
-        yellow(
-          `[WARNING] The command at ${path.relative(
-            commandsPath,
-            file
-          )} is missing "data" or "execute"`
-        )
+        yellow(`[WARNING] The command at ${path.relative(commandsPath, file)} is missing "data" or "execute"`)
       );
     }
   } catch (err) {
@@ -54,18 +43,14 @@ for (const file of commandFiles) {
   }
 }
 
-const rest = new REST().setToken(process.env.CONFIG.BOT_TOKEN);
+const rest = new REST().setToken(process.env.BOT_TOKEN);
 
 try {
   console.log(yellow("Started refreshing application (/) commands..."));
 
-  await rest.put(
-    Routes.applicationGuildCommands(
-      process.env.CONFIG.CLIENT_ID,
-      process.env.CONFIG.GUILD_ID
-    ),
-    { body: commands }
-  );
+  await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), {
+    body: commands,
+  });
 
   console.log(green("Successfully reloaded application (/) commands."));
   process.exit(0);
