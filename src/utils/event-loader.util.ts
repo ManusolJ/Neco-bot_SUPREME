@@ -1,11 +1,14 @@
 import { readdir } from "fs/promises";
-import { pathToFileURL } from "url";
-import type { Client } from "discord.js";
+import { pathToFileURL, fileURLToPath } from "url";
 import path from "path";
+import type { Client } from "discord.js";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const eventsPath = path.resolve(__dirname, "./events");
 
 async function loadAllEvents(client: Client): Promise<void> {
-  const eventsPath = path.resolve(__dirname, "../events");
-
   async function walk(dir: string) {
     const entries = await readdir(dir, { withFileTypes: true });
 
@@ -14,19 +17,19 @@ async function loadAllEvents(client: Client): Promise<void> {
 
       if (entry.isDirectory()) {
         await walk(fullPath);
-      } else if (entry.isFile() && (entry.name.endsWith(".event.ts") || entry.name.endsWith(".event.js"))) {
+      } else if (entry.isFile() && entry.name.endsWith(".event.js")) {
         try {
           const module = await import(pathToFileURL(fullPath).href);
           const handler = module.default ?? module.register;
 
           if (typeof handler === "function") {
             handler(client);
-            console.log(`[EVENT LOADER] Cargado: ${entry.name}`);
+            console.log(`[EVENT LOADER] Loaded: ${entry.name}`);
           } else {
-            console.warn(`[EVENT LOADER] Módulo sin función válida: ${entry.name}`);
+            console.warn(`[EVENT LOADER] No valid function in module: ${entry.name}`);
           }
         } catch (err) {
-          console.error(`[EVENT LOADER] Error al cargar ${entry.name}:`, err);
+          console.error(`[EVENT LOADER] Error loading ${entry.name}:`, err);
         }
       }
     }
