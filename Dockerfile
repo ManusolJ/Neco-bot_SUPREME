@@ -10,9 +10,7 @@
     
     COPY . .
     
-    RUN npm run build \
-     && cp -r src/events dist/events \
-     && cp -r src/commands dist/commands
+    RUN npm run build
     
     FROM node:20-alpine
     
