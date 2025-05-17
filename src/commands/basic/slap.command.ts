@@ -21,7 +21,7 @@ const IMAGE_FEEDBACK = "pilk.jpg";
 const IMAGE_SLAP = "slap.jpg";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const necoService = NecoService.getInstance();
+  const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
   const target = interaction.options.getUser("usuario", true);
   const author = interaction.user;

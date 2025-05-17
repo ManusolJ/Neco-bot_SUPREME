@@ -9,7 +9,7 @@ import reactionBuilder from "@utils/build-reaction.util";
 export default function altarEvent(client: Client): void {
   client.on(Events.MessageCreate, async (message) => {
     if (message && message.channelId === process.env.NECO_ALTAR_CHANNEL) {
-      const necoService = NecoService.getInstance();
+      const necoService = await NecoService.getInstance();
       const author = message.author;
       const guild = message.guild;
 

@@ -17,7 +17,7 @@ export const data = new SlashCommandBuilder()
 const COST_OF_ACTION = 1;
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const necoService = NecoService.getInstance();
+  const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
   const author = interaction.user;
   const target = interaction.options.getUser("usuario", true) ?? null;

@@ -21,7 +21,7 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const necoService = NecoService.getInstance();
+  const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
   const target = interaction.options.getUser("usuario", true);
   const coins = interaction.options.getInteger("monedas", true);

@@ -32,7 +32,7 @@ const IMAGE_PATH = "public/img/";
 const IMAGE_FEEDBACK = "pilk.jpg";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const necoService = NecoService.getInstance();
+  const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
 
   if (!interaction.inGuild() || !interaction.guild) {

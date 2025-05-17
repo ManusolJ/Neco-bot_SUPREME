@@ -19,7 +19,7 @@ const MINIMUM_AWARDED = 1;
 const MAXIMUM_AWARDED = 10;
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const necoService = NecoService.getInstance();
+  const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
 
   try {

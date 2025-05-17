@@ -8,7 +8,7 @@ export const data = new SlashCommandBuilder()
   .setDescription("Informacion sobre tu saldo caotico.");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  const necoService = NecoService.getInstance();
+  const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
   const author = interaction.user;
 
