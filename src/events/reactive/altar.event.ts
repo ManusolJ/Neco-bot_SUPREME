@@ -1,10 +1,10 @@
 import { Client, Events } from "discord.js";
 
-import NecoService from "../../services/neco.service";
-import MessageService from "../../services/message.service";
-import chaosBuilder from "../../utils/build-chaos.util";
-import RandomMessageBuilder from "../../utils/build-random-message.util";
-import reactionBuilder from "../../utils/build-reaction.util";
+import MessageService from "@services/message.service";
+import NecoService from "@services/neco.service";
+import chaosBuilder from "@utils/build-chaos.util";
+import randomMessageBuilder from "@utils/build-random-message.util";
+import reactionBuilder from "@utils/build-reaction.util";
 
 export default function altarEvent(client: Client): void {
   client.on(Events.MessageCreate, async (message) => {
@@ -29,7 +29,7 @@ export default function altarEvent(client: Client): void {
 
       await necoService.manipulateAgentNecoins(author.id, chaosBuilder(1, 5));
 
-      const msg = RandomMessageBuilder("altar", author);
+      const msg = randomMessageBuilder("altar", author);
 
       if (!msg) return;
 

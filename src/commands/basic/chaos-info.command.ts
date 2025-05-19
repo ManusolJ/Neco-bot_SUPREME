@@ -1,6 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import InteractionService from "../../services/interaction.service";
-import NecoService from "../../services/neco.service";
+
+import InteractionService from "@services/interaction.service";
+import NecoService from "@services/neco.service";
 
 export const data = new SlashCommandBuilder()
   .setName("chaos-info")

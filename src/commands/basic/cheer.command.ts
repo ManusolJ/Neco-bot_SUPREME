@@ -1,9 +1,9 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
 
-import InteractionService from "../../services/interaction.service";
-import NecoService from "../../services/neco.service";
-import RandomMessageBuilder from "../../utils/build-random-message.util";
+import InteractionService from "@services/interaction.service";
+import NecoService from "@services/neco.service";
+import randomMessageBuilder from "@utils/build-random-message.util";
 
 export const data = new SlashCommandBuilder()
   .setName("cheer")
@@ -50,7 +50,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const replyMsg = RandomMessageBuilder(data.name, target);
+  const replyMsg = randomMessageBuilder(data.name, target);
   const files = path.resolve(path.join(IMAGE_PATH + IMAGE_CHEER));
   return await interactionService.filesReply(replyMsg, [files]);
 }

@@ -1,6 +1,6 @@
 import type { User } from "discord.js";
 
-export default function RandomMessageBuilder(option: string, user?: User, level: string = "light"): string {
+export default function randomMessageBuilder(option: string, user?: User, level: string = "light"): string {
   const displayName = user ? `<@${user.id}>` : "Criatura";
 
   switch (option) {

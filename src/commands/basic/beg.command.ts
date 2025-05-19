@@ -1,10 +1,11 @@
+import { isUserLocked, lockUser, unlockUser } from "@utils/lock-user.util";
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
-import InteractionService from "../../services/interaction.service";
-import NecoService from "../../services/neco.service";
-import chaosBuilder from "../../utils/build-chaos.util";
-import RandomMessageBuilder from "../../utils/build-random-message.util";
-import { isUserLocked, lockUser, unlockUser } from "../../utils/lock-user.util";
+
+import InteractionService from "@services/interaction.service";
+import NecoService from "@services/neco.service";
+import chaosBuilder from "@utils/build-chaos.util";
+import randomMessageBuilder from "@utils/build-random-message.util";
 
 export const data = new SlashCommandBuilder()
   .setName("beg")
@@ -70,14 +71,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     if (!success) {
       await necoService.manipulateAgentBegState(author.id, true);
-      const msg = RandomMessageBuilder("begFail");
+      const msg = randomMessageBuilder("begFail");
       const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FAIL));
       return await interactionService.filesReply(msg, [imgPath]);
     }
 
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);
     await necoService.manipulateAgentNecoins(author.id, agent.necoins + awarded);
-    const replyMsg = `${RandomMessageBuilder(data.name, author)} ${
+    const replyMsg = `${randomMessageBuilder(data.name, author)} ${
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;
 

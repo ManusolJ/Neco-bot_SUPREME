@@ -1,7 +1,7 @@
+import type { Client } from "discord.js";
 import { readdir } from "fs/promises";
 import { pathToFileURL, fileURLToPath } from "url";
 import path from "path";
-import type { Client } from "discord.js";
 
 type EventModule = {
   default?: (client: Client) => void;

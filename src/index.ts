@@ -1,6 +1,6 @@
 import { Client, GatewayIntentBits } from "discord.js";
 import "dotenv/config";
-import loadAllEvents from "./utils/event-loader.util";
+import loadAllEvents from "@utils/event-loader.util";
 
 const client = new Client({
   intents: [

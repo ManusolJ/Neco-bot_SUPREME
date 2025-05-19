@@ -10,7 +10,7 @@ import fs from "fs";
 
 const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
-export default class ChannelMessageService {
+export default class MessageService {
   private channel: GuildTextBasedChannel;
 
   constructor(channel: GuildTextBasedChannel) {
