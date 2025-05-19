@@ -5,7 +5,8 @@
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && tsc-alias --resolve-full-paths",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "deploy": "bun run src/deploy.command.ts"
   },
   "dependencies": {
     "@discordjs/voice": "^0.18.0",
