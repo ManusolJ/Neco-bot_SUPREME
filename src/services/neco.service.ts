@@ -17,6 +17,7 @@ export default class NecoService {
     if (!NecoService.instance) {
       const connection = await getDb();
       NecoService.instance = new NecoService(connection);
+      console.log("DB connection created, and service instantiated.");
     }
     return NecoService.instance;
   }
@@ -41,6 +42,13 @@ export default class NecoService {
     rows.forEach((row) => agents.push(row));
 
     return agents;
+  }
+
+  async checkAgentExists(id: string): Promise<boolean> {
+    const sql = `SELECT 1 FROM ${AGENT_TABLE} where id = ?`;
+    const [rows] = await this.con.execute<ChaosAgent[]>(sql, [id]);
+
+    return rows.length !== 0;
   }
 
   async createAgent(id: string): Promise<boolean> {

@@ -1,4 +1,3 @@
-import { isUserLocked, lockUser, unlockUser } from "@utils/lock-user.util";
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
 
@@ -6,6 +5,7 @@ import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
 import chaosBuilder from "@utils/build-chaos.util";
 import randomMessageBuilder from "@utils/build-random-message.util";
+import { isUserLocked, lockUser, unlockUser } from "@utils/lock-user.util";
 
 export const data = new SlashCommandBuilder()
   .setName("beg")
@@ -22,16 +22,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
 
+  const author = interaction.user;
+  let isLocked = false;
+
   try {
-    if (!interaction.inGuild() || !interaction.guild) {
-      const errorMsg = "NYAAAHA! Este comando solo puede usar en el servidor!";
-      return await interactionService.errorReply(errorMsg);
-    }
-
-    const author = interaction.user;
-    const member = await interaction.guild.members.fetch(author.id);
-
-    if (!author || !member) {
+    if (!author) {
       const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
       return await interactionService.errorReply(errorMsg);
     }
@@ -42,6 +37,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     lockUser(author.id);
+    isLocked = true;
+
+    if (!interaction.inGuild() || !interaction.guild) {
+      const errorMsg = "NYAAAHA! Este comando solo puede usar en el servidor!";
+      return await interactionService.errorReply(errorMsg);
+    }
+
+    const member = await interaction.guild.members.fetch(author.id);
+
+    if (!member) {
+      const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
+      return await interactionService.errorReply(errorMsg);
+    }
 
     let agent = await necoService.getAgent(author.id);
 
@@ -55,17 +63,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (agent.begged) {
       const msg = "¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!";
       const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FEEDBACK));
-      return await interactionService.filesReply(msg, [imgPath]);
+      return await interactionService.feedbackReply(msg, [imgPath]);
     }
 
     if (agent.necoins >= LIMIT) {
       const msg = "¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia.";
       const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FEEDBACK));
-      return await interactionService.filesReply(msg, [imgPath]);
+      return await interactionService.feedbackReply(msg, [imgPath]);
     }
 
     let success = Math.random() < 0.8;
-    if (!success && member.roles.cache.has(process.env.CULTIST_ROLE)) {
+
+    const cultistRole = process.env.CULTIST_ROLE;
+
+    if (!success && cultistRole && member.roles.cache.has(cultistRole)) {
+      const replyMsg = "Fallaste! Menuda skill iss- Ah, espera... Que eres uno de mis fieles. Venga, otro intento...";
+      await interactionService.standardReply(replyMsg);
       success = Math.random() < 0.6;
     }
 
@@ -84,7 +97,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }`;
 
     return await interactionService.standardReply(replyMsg);
+  } catch (e) {
+    const errorMsg = `Hubo un PROBLEMA! El siguiente: `;
+    console.error(errorMsg, e);
+    await interactionService.errorReply("¡NYAAA! Algo salio MUY mal. Intenta de nuevo mas tarde... O diselo a Manuel.");
   } finally {
-    unlockUser(interaction.user.id);
+    if (isLocked) {
+      unlockUser(interaction.user.id);
+    }
   }
 }

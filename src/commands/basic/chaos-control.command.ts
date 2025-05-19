@@ -23,38 +23,29 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
+
   const target = interaction.options.getUser("usuario", true);
   const coins = interaction.options.getInteger("monedas", true);
 
-  if (!target || target.bot) {
-    const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
-    const reason = target.bot
-      ? `NO puedes usar mis poderes contra mi, bobo!`
-      : `NO pude conseguir tu informacion o la del objetivo... Krill issue.`;
-    return await interactionService.errorReply(errorMsg + reason);
-  }
-
-  if (!coins) {
-    const errorMsg = "Estupido dingus! No puedo hacer nada sin monedas!";
+  if (target.bot) {
+    const errorMsg = `NO puedes usar mis poderes contra mi, bobo!`;
     return await interactionService.errorReply(errorMsg);
   }
 
-  const agent = await necoService.getAgent(target.id);
-
-  if (!agent) {
-    await necoService.createAgent(target.id);
-  }
-
   try {
+    const agentExists = await necoService.checkAgentExists(target.id);
+
+    if (!agentExists) {
+      await necoService.createAgent(target.id);
+    }
+
     await necoService.manipulateAgentNecoins(target.id, coins);
+
+    const replyMsg = `Ahora ${target.displayName} tiene ${coins} moneditas!`;
+    return await interactionService.feedbackReply(replyMsg);
   } catch (e) {
-    const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
+    const errorMsg = `¡NYAAA! Algo salio MUY mal. Intenta de nuevo mas tarde... O diselo a Manuel.`;
     console.error(errorMsg, e);
+    return await interactionService.errorReply(errorMsg);
   }
-
-  const updatedCoins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.necoins : 0));
-
-  const replyMsg = `Ahora ${target.displayName} tiene ${updatedCoins} moneditas!`;
-
-  return await interactionService.feedbackReply(replyMsg);
 }

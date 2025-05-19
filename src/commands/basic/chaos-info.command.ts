@@ -18,8 +18,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   try {
-    const agent = await necoService.getAgent(author.id);
-    const coins = agent ? agent.necoins : null;
+    const coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.necoins : null));
 
     if (!coins) {
       const feedbackMsg = `LMAO! No tienes ni una sola moneda! Hueles a pobre.`;

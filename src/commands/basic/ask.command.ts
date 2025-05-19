@@ -19,11 +19,21 @@ const COST_OF_ACTION = 1;
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
+
   const author = interaction.user;
   const target = interaction.options.getUser("usuario", true) ?? null;
-  const coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.necoins : null));
 
-  if (!author || !target || target.bot) {
+  let coins = null;
+
+  try {
+    coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.necoins : null));
+  } catch (e) {
+    const errorMsg = `Uuh... Hubo un error intentado controlar el saldo caotico... `;
+    console.error(errorMsg, e);
+    return await interactionService.errorReply(errorMsg);
+  }
+
+  if (!author || target.bot) {
     const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
     const reason = target.bot
       ? `NO puedes usar mis poderes contra mi, bobo!`

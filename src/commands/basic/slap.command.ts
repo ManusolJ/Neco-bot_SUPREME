@@ -25,7 +25,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const target = interaction.options.getUser("usuario", true);
   const author = interaction.user;
 
-  if (!target || !author || target.bot) {
+  if (!author || target.bot) {
     const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
     const reason = target.bot
       ? `NO puedes usar mis poderes contra mi, bobo!`
