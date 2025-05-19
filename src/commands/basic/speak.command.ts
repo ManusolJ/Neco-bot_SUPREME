@@ -70,7 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const sound = interaction.options.getString("sonido", true);
-  const audioPath = path.join(__dirname, `../../assets/sounds/${sound}.mp3`);
+  const audioPath = path.resolve(`public/audio/${sound}.mp3`);
 
   if (!fs.existsSync(audioPath)) {
     const errorMsg = `Nyaa~ El sonido "${sound}" no existe.`;
