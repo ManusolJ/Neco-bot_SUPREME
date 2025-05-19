@@ -1,23 +1,36 @@
-# Use Bun’s base image for runtime
-FROM oven/bun:1.1.3 AS base
+# --- Build stage -------------------------------------------------------------
+    FROM node:20-slim AS builder
 
-# Set working directory
-WORKDIR /app
-
-# Install required system dependencies
-RUN apt-get update && \
-    apt-get install -y ffmpeg npm && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
-# Copy package.json and package-lock.json for npm install
-COPY package.json package-lock.json ./
-
-# Install dependencies with npm
-RUN npm ci
-
-# Copy the rest of the source code
-COPY . .
-
-# Use Bun to run the bot
-CMD ["bun", "run", "src/index.ts"]
+    WORKDIR /app
+    
+    # Install build-time system packages
+    RUN apt-get update \
+     && apt-get install -y ffmpeg build-essential python3
+    
+    # Install app dependencies
+    COPY package.json package-lock.json ./
+    RUN npm ci
+    
+    # Copy source and compile
+    COPY . .
+    RUN npm run build          # tsc  +  tsc-alias
+    
+    # --- Runtime stage -----------------------------------------------------------
+    FROM node:20-slim
+    
+    WORKDIR /app
+    
+    # Copy node_modules (with native opus bindings compiled in the builder)
+    COPY --from=builder /app/node_modules ./node_modules
+    
+    # Copy compiled JS only
+    COPY --from=builder /app/dist ./dist
+    COPY --from=builder /app/public ./public       
+    
+    # FFmpeg runtime dependency
+    RUN apt-get update && apt-get install -y ffmpeg && \
+        rm -rf /var/lib/apt/lists/*
+    
+    ENV NODE_ENV=production
+    CMD ["node", "-r", "tsconfig-paths/register", "dist/index.js"]
+    

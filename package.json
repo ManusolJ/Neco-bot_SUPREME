@@ -1,16 +1,13 @@
 {
   "name": "neco_bot-supreme",
   "version": "1.0.0",
-  "main": "src/index.ts",
   "type": "module",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "bun run src/index.ts",
-    "deploy": "bun run src/deploy.command.ts"
-  },
-  "devDependencies": {
-    "@types/node": "^22.15.18",
-    "@typescript-eslint/eslint-plugin": "^8.32.0",
-    "typescript": "^5.8.3"
+    "build": "tsc && tsc-alias --resolve-full-paths",
+    "start": "node dist/index.js",
+    "dev": "tsx watch src/index.ts",
+    "deploy": "node -r tsconfig-paths/register dist/deploy.command.js"
   },
   "dependencies": {
     "@discordjs/voice": "^0.18.0",
@@ -18,5 +15,13 @@
     "dotenv": "^16.5.0",
     "mysql2": "^3.14.1",
     "opusscript": "^0.0.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "@typescript-eslint/eslint-plugin": "^8.32.0",
+    "tsx": "^4.7.1",
+    "tsc-alias": "^1.8.8",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.8.3"
   }
 }

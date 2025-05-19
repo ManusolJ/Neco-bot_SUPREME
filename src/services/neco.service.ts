@@ -1,7 +1,7 @@
 import { Connection, ResultSetHeader } from "mysql2/promise";
 
-import type ChaosAgent from "@interfaces/agent.interface";
-import { getDb } from "src/db";
+import type ChaosAgent from "../interfaces/agent.interface";
+import { getDb } from "../db";
 
 const AGENT_TABLE = "chaos_agents";
 

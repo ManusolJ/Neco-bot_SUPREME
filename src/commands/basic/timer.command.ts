@@ -1,7 +1,8 @@
-import InteractionService from "@services/interaction.service";
-import RandomMessageBuilder from "@utils/build-random-message.util";
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
+
+import InteractionService from "../../services/interaction.service";
+import RandomMessageBuilder from "../../utils/build-random-message.util";
 
 export const data = new SlashCommandBuilder()
   .setName("timer")

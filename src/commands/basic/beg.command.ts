@@ -1,11 +1,10 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
-
-import InteractionService from "@services/interaction.service";
-import NecoService from "@services/neco.service";
-import RandomMessageBuilder from "@utils/build-random-message.util";
-import { isUserLocked, lockUser, unlockUser } from "@utils/lock-user.util";
-import chaosBuilder from "@utils/build-chaos.util";
+import InteractionService from "../../services/interaction.service";
+import NecoService from "../../services/neco.service";
+import chaosBuilder from "../../utils/build-chaos.util";
+import RandomMessageBuilder from "../../utils/build-random-message.util";
+import { isUserLocked, lockUser, unlockUser } from "../../utils/lock-user.util";
 
 export const data = new SlashCommandBuilder()
   .setName("beg")

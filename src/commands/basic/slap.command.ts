@@ -1,9 +1,8 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
 
-import NecoService from "@services/neco.service";
-import InteractionService from "@services/interaction.service";
-import RandomMessageBuilder from "@utils/build-random-message.util";
+import InteractionService from "../../services/interaction.service";
+import NecoService from "../../services/neco.service";
 
 export const data = new SlashCommandBuilder()
   .setName("slap")

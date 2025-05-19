@@ -1,8 +1,7 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import path from "path";
-
-import InteractionService from "@services/interaction.service";
-import NecoService from "@services/neco.service";
+import NecoService from "../../services/neco.service";
+import InteractionService from "../../services/interaction.service";
 
 export const data = new SlashCommandBuilder()
   .setName("ask")
