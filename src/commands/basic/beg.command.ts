@@ -31,9 +31,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const author = interaction.user;
     const member = await interaction.guild.members.fetch(author.id);
 
-    console.log(author);
-    console.log(member);
-
     if (!author || !member) {
       const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
       return await interactionService.errorReply(errorMsg);
@@ -47,7 +44,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     lockUser(author.id);
 
     let agent = await necoService.getAgent(author.id);
-    console.log(agent);
 
     if (!agent) {
       await necoService.createAgent(author.id);
@@ -55,8 +51,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (!agent) throw new Error("Agent creation failed");
-
-    console.log(agent.begged);
 
     if (agent.begged) {
       const msg = "¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!";
@@ -83,6 +77,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);
+    await necoService.manipulateAgentBegState(author.id, true);
     await necoService.manipulateAgentNecoins(author.id, agent.necoins + awarded);
     const replyMsg = `${randomMessageBuilder(data.name, author)} ${
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
