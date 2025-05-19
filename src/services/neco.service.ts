@@ -58,28 +58,28 @@ export default class NecoService {
   }
 
   async manipulateAgentShame(id: string, shame: number): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET shame_counter = ? WHERE id = ?`;
+    const sql = `UPDATE ${AGENT_TABLE} SET shame = ? WHERE id = ?`;
     const [result] = await this.con.execute<ResultSetHeader>(sql, [shame, id]);
 
     return result.affectedRows !== 0;
   }
 
   async manipulateAgentBegState(id: string, state: boolean): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET beg_used = ? WHERE id = ?`;
+    const sql = `UPDATE ${AGENT_TABLE} SET begged = ? WHERE id = ?`;
     const [result] = await this.con.execute<ResultSetHeader>(sql, [state, id]);
 
     return result.affectedRows !== 0;
   }
 
   async manipulateAgentRoleState(id: string, state: boolean): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET role_imposed = ? WHERE id = ?`;
+    const sql = `UPDATE ${AGENT_TABLE} SET punished = ? WHERE id = ?`;
     const [result] = await this.con.execute<ResultSetHeader>(sql, [state, id]);
 
     return result.affectedRows !== 0;
   }
 
   async resetBegState(): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET beg_used = FALSE`;
+    const sql = `UPDATE ${AGENT_TABLE} SET begged = FALSE`;
     const [result] = await this.con.execute<ResultSetHeader>(sql);
 
     return result.affectedRows !== 0;
