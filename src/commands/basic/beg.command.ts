@@ -86,7 +86,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await necoService.manipulateAgentBegState(author.id, true);
       const msg = randomMessageBuilder("begFail");
       const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FAIL));
-      return await interactionService.filesReply(msg, [imgPath]);
+      return await interactionService.followReply({ content: msg, files: [imgPath] });
     }
 
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);

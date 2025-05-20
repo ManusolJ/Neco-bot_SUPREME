@@ -38,9 +38,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const feedbackMsg = "Este schizo no tiene un solo punto! Le falta Pilk, vaya pringao.";
     return await interactionService.feedbackReply(feedbackMsg);
   } else {
-    const replyMsg = `Veamos, el schizo elegido tiene...${
-      coins > 1 ? `${coins} monedas` : "1 moneda! LMAO, krill issue."
-    }`;
+    const replyMsg = `Veamos, ${target} tiene...${coins > 1 ? `${coins} monedas` : "1 moneda! LMAO, krill issue."}`;
     return hidden ? await interactionService.feedbackReply(replyMsg) : await interactionService.standardReply(replyMsg);
   }
 }
