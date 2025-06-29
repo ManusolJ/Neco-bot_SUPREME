@@ -1,6 +1,4 @@
-import { RowDataPacket } from "mysql2";
-
-export default interface ChaosAgent extends RowDataPacket {
+export default interface ChaosAgent {
   id: string;
   balance: number;
   shame: number;
