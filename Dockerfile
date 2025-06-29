@@ -1,9 +1,16 @@
 FROM node:20-slim AS builder
 
+ENV TZ=UTC
+
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y build-essential python3 libpq-dev && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    ffmpeg \
+    libpq5 \
+    tzdata && \
+    ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./

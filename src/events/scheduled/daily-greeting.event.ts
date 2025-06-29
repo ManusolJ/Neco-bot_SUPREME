@@ -1,4 +1,3 @@
-// TODO: IMPLEMENT...
 import MessageService from "@services/message.service";
 import NecoService from "@services/neco.service";
 import chaosBuilder from "@utils/build-chaos.util";
@@ -13,7 +12,7 @@ const MAXIMUM_REWARD = 3;
 let cronScheduled = false;
 
 export default function dailyGreeting(client: Client): void {
-  client.on("ready", () => {
+  client.once("ready", () => {
     if (cronScheduled) return;
     cronScheduled = true;
     cron.schedule(
