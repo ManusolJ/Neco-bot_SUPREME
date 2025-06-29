@@ -1,102 +1,82 @@
-import { Connection, ResultSetHeader } from "mysql2/promise";
-
+import { Pool } from "pg";
 import type ChaosAgent from "@interfaces/agent.interface";
 import { getDb } from "../db";
 
-const AGENT_TABLE = "chaos_agents";
+const AGENT_TABLE = "agents";
 
 export default class NecoService {
   private static instance: NecoService;
-  private con: Connection;
+  private pool: Pool;
 
-  private constructor(con: Connection) {
-    this.con = con;
+  private constructor(pool: Pool) {
+    this.pool = pool;
   }
 
   static async getInstance(): Promise<NecoService> {
     if (!NecoService.instance) {
-      const connection = await getDb();
-      NecoService.instance = new NecoService(connection);
-      console.log("DB connection created, and service instantiated.");
+      const pool = await getDb();
+      NecoService.instance = new NecoService(pool);
     }
     return NecoService.instance;
   }
 
   async getAgent(id: string): Promise<ChaosAgent | null> {
-    const sql = `SELECT * FROM ${AGENT_TABLE} WHERE id = ?`;
-    const [rows] = await this.con.execute<ChaosAgent[]>(sql, [id]);
-
-    if (!rows || rows.length === 0) return null;
-
-    return rows[0];
+    const sql = `SELECT * FROM ${AGENT_TABLE} WHERE id = $1`;
+    const { rows } = await this.pool.query<ChaosAgent>(sql, [id]);
+    return rows[0] || null;
   }
 
   async getAllAgents(): Promise<ChaosAgent[] | null> {
-    const agents: ChaosAgent[] = [];
     const sql = `SELECT * FROM ${AGENT_TABLE}`;
-
-    const [rows] = await this.con.query<ChaosAgent[]>(sql);
-
-    if (!rows || rows.length === 0) return null;
-
-    rows.forEach((row) => agents.push(row));
-
-    return agents;
+    const { rows } = await this.pool.query<ChaosAgent>(sql);
+    return rows.length ? rows : null;
   }
 
   async checkAgentExists(id: string): Promise<boolean> {
-    const sql = `SELECT 1 FROM ${AGENT_TABLE} where id = ?`;
-    const [rows] = await this.con.execute<ChaosAgent[]>(sql, [id]);
-
-    return rows.length !== 0;
+    const sql = `SELECT 1 FROM ${AGENT_TABLE} WHERE id = $1`;
+    const { rows } = await this.pool.query(sql, [id]);
+    return rows ? rows.length > 0 : false;
   }
 
   async createAgent(id: string): Promise<boolean> {
-    const sql = `INSERT INTO ${AGENT_TABLE} (id) VALUES (?)`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql, [id]);
-
-    return result.affectedRows !== 0;
+    const sql = `INSERT INTO ${AGENT_TABLE} (id) VALUES ($1)`;
+    const { rowCount } = await this.pool.query(sql, [id]);
+    return rowCount ? rowCount > 0 : false;
   }
 
   async manipulateAgentNecoins(id: string, points: number): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET necoins = ? WHERE id = ?`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql, [points, id]);
-
-    return result.affectedRows !== 0;
+    const sql = `UPDATE ${AGENT_TABLE} SET necoins = $1 WHERE id = $2`;
+    const { rowCount } = await this.pool.query(sql, [points, id]);
+    return rowCount ? rowCount > 0 : false;
   }
 
   async manipulateAgentShame(id: string, shame: number): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET shame = ? WHERE id = ?`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql, [shame, id]);
-
-    return result.affectedRows !== 0;
+    const sql = `UPDATE ${AGENT_TABLE} SET shame = $1 WHERE id = $2`;
+    const { rowCount } = await this.pool.query(sql, [shame, id]);
+    return rowCount ? rowCount > 0 : false;
   }
 
   async manipulateAgentBegState(id: string, state: boolean): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET begged = ? WHERE id = ?`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql, [state, id]);
-
-    return result.affectedRows !== 0;
+    const sql = `UPDATE ${AGENT_TABLE} SET begged = $1 WHERE id = $2`;
+    const { rowCount } = await this.pool.query(sql, [state, id]);
+    return rowCount ? rowCount > 0 : false;
   }
 
   async manipulateAgentRoleState(id: string, state: boolean): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET punished = ? WHERE id = ?`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql, [state, id]);
-
-    return result.affectedRows !== 0;
+    const sql = `UPDATE ${AGENT_TABLE} SET punished = $1 WHERE id = $2`;
+    const { rowCount } = await this.pool.query(sql, [state, id]);
+    return rowCount ? rowCount > 0 : false;
   }
 
   async resetBegState(): Promise<boolean> {
     const sql = `UPDATE ${AGENT_TABLE} SET begged = FALSE`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql);
-
-    return result.affectedRows !== 0;
+    const { rowCount } = await this.pool.query(sql);
+    return rowCount ? rowCount > 0 : false;
   }
 
   async resetGlobalChaos(): Promise<boolean> {
     const sql = `UPDATE ${AGENT_TABLE} SET necoins = 0`;
-    const [result] = await this.con.execute<ResultSetHeader>(sql);
-
-    return result.affectedRows !== 0;
+    const { rowCount } = await this.pool.query(sql);
+    return rowCount ? rowCount > 0 : false;
   }
 }
