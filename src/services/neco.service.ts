@@ -44,8 +44,8 @@ export default class NecoService {
     return rowCount ? rowCount > 0 : false;
   }
 
-  async manipulateAgentNecoins(id: string, points: number): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET necoins = $1 WHERE id = $2`;
+  async manipulateAgentBalance(id: string, points: number): Promise<boolean> {
+    const sql = `UPDATE ${AGENT_TABLE} SET balance = $1 WHERE id = $2`;
     const { rowCount } = await this.pool.query(sql, [points, id]);
     return rowCount ? rowCount > 0 : false;
   }
@@ -75,7 +75,7 @@ export default class NecoService {
   }
 
   async resetGlobalChaos(): Promise<boolean> {
-    const sql = `UPDATE ${AGENT_TABLE} SET necoins = 0`;
+    const sql = `UPDATE ${AGENT_TABLE} SET balance = 0`;
     const { rowCount } = await this.pool.query(sql);
     return rowCount ? rowCount > 0 : false;
   }

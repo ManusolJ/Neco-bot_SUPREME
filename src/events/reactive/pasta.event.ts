@@ -25,7 +25,7 @@ export default function pastaEvent(client: Client): void {
 
       const msgService = new MessageService(channel);
 
-      await necoService.manipulateAgentNecoins(author.id, chaosBuilder(1, 5));
+      await necoService.manipulateAgentBalance(author.id, chaosBuilder(1, 5));
 
       const msg = randomMessageBuilder("copypasta", author);
 

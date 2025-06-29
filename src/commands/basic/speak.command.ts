@@ -89,7 +89,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       adapterCreator: voiceChannel.guild.voiceAdapterCreator,
     });
 
-    await necoService.manipulateAgentNecoins(author.id, coins - COST_OF_ACTION);
+    await necoService.manipulateAgentBalance(author.id, coins - COST_OF_ACTION);
 
     switch (sound) {
       case "pipe":

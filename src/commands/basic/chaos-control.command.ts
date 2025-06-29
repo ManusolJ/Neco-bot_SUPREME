@@ -39,7 +39,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await necoService.createAgent(target.id);
     }
 
-    await necoService.manipulateAgentNecoins(target.id, coins);
+    await necoService.manipulateAgentBalance(target.id, coins);
 
     const replyMsg = `Ahora ${target.displayName} tiene ${coins} moneditas!`;
     return await interactionService.feedbackReply(replyMsg);

@@ -57,7 +57,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (!success) {
-      await necoService.manipulateAgentNecoins(author.id, coins - COST_OF_ACTION);
+      await necoService.manipulateAgentBalance(author.id, coins - COST_OF_ACTION);
     }
   } catch (e) {
     const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";

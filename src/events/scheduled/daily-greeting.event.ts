@@ -74,7 +74,7 @@ export default function dailyGreeting(client: Client): void {
                 const agent = await necoService.getAgent(userId);
                 if (agent) {
                   const awardedCoins = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
-                  await necoService.manipulateAgentNecoins(userId, agent.balance + awardedCoins);
+                  await necoService.manipulateAgentBalance(userId, agent.balance + awardedCoins);
                   console.log(`Awarded ${awardedCoins} coins to ${user.tag} (${user.id})`);
                 }
               } finally {
