@@ -35,7 +35,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg + reason);
   }
 
-  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.necoins : null));
+  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
 
   if (!coins || coins < COST_OF_ACTION) {
     const feedbackMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;

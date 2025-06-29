@@ -32,7 +32,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.necoins : null));
+  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
 
   if (!coins) {
     const feedbackMsg = "Este schizo no tiene un solo punto! Le falta Pilk, vaya pringao.";

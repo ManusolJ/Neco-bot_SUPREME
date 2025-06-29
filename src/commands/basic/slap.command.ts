@@ -22,6 +22,7 @@ const IMAGE_SLAP = "slap.jpg";
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
+
   const target = interaction.options.getUser("usuario", true);
   const author = interaction.user;
 
@@ -33,7 +34,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg + reason);
   }
 
-  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.necoins : null));
+  const coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
 
   if (!coins || coins < COST_OF_ACTION) {
     const feedbackMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;
@@ -42,7 +43,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   try {
-    await necoService.manipulateAgentNecoins(author.id, coins - COST_OF_ACTION);
+    const jan = process.env.USER_JAN;
+    let success;
+    if (jan) {
+      const targetIsJan = target.id === jan;
+      if (targetIsJan) {
+        success = Math.random() > 0.5;
+      }
+      if (success) {
+        const replyMsg = `¡Vaya! Con que alguien quiere slapear las bolas de Jan... Pues venga, esta es gratis. Pero no te acostumbres`;
+        await interactionService.standardReply(replyMsg);
+      }
+    }
+
+    if (!success) {
+      await necoService.manipulateAgentNecoins(author.id, coins - COST_OF_ACTION);
+    }
   } catch (e) {
     const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
     console.error(errorMsg, e);

@@ -26,7 +26,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   let coins = null;
 
   try {
-    coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.necoins : null));
+    coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
   } catch (e) {
     const errorMsg = `Uuh... Hubo un error intentado controlar el saldo caotico... `;
     console.error(errorMsg, e);
