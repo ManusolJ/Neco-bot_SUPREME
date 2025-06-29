@@ -1,6 +1,7 @@
-import { Pool } from "pg";
+import pg, { Pool } from "pg";
 import "dotenv/config";
 
+const { Pool: PoolClass } = pg;
 let necoPool: Pool | null = null;
 
 export async function getDb(): Promise<Pool> {
@@ -9,7 +10,7 @@ export async function getDb(): Promise<Pool> {
       throw new Error("Missing required database environment variables");
     }
 
-    necoPool = new Pool({
+    necoPool = new PoolClass({
       host: process.env.DB_HOST,
       port: parseInt(process.env.DB_PORT || "5432"),
       user: process.env.DB_USER,

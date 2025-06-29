@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import type { Pool } from "pg";
 import type ChaosAgent from "@interfaces/agent.interface";
 import { getDb } from "../db";
 
