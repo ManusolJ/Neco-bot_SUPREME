@@ -44,11 +44,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   try {
     const jan = process.env.USER_JAN;
+    console.log(jan);
     let success;
     if (jan) {
       const targetIsJan = target.id === jan;
+      console.log(targetIsJan);
+
       if (targetIsJan) {
         success = Math.random() > 0.5;
+        console.log(success);
       }
       if (success) {
         const replyMsg = `¡Vaya! Con que alguien quiere slapear las bolas de Jan... Pues venga, esta es gratis. Pero no te acostumbres`;
