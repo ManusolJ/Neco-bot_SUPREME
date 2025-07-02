@@ -23,8 +23,8 @@ export const data = new SlashCommandBuilder()
       .setMaxValue(1440)
   );
 
-const ANIMATION_PATH = "public/animation";
-const DANCE_PATH = "dance.gif";
+const ANIMATION_PATH = "public/animation/";
+const DANCE_ANIMATION = path.join(ANIMATION_PATH, "dance.gif");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const interactionService = new InteractionService(interaction);
@@ -62,11 +62,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   setTimeout(async () => {
     try {
-      const msg = randomMessageBuilder(data.name, author);
-      const imagePath = path.resolve(path.join(ANIMATION_PATH, DANCE_PATH));
+      const replyMsg = randomMessageBuilder(data.name, author);
+      const image = path.resolve(DANCE_ANIMATION);
       await author.send({
-        content: msg,
-        files: [imagePath],
+        content: replyMsg,
+        files: [image],
       });
     } catch (err) {
       console.error("No pude enviar DM:", err);

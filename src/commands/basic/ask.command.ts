@@ -16,8 +16,8 @@ export const data = new SlashCommandBuilder()
 
 const COST_OF_ACTION = 1;
 const IMAGE_PATH = "public/img/";
-const NO_BALANCE_IMAGE_PATH = IMAGE_PATH + "pilk.jpg";
-const INTERACTION_RESOLUTION_IMAGE_PATH = IMAGE_PATH + "care.jpg";
+const IMAGE_FAIL = path.join(IMAGE_PATH, "pilk.jpg");
+const IMAGE_CARE = path.join(IMAGE_PATH, "care.jpg");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -45,7 +45,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   if (!balance || balance < COST_OF_ACTION) {
-    const image = path.resolve(NO_BALANCE_IMAGE_PATH);
+    const image = path.resolve(IMAGE_FAIL);
     const errorMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;
     return await interactionService.feedbackReply(errorMsg, [image]);
   }
@@ -59,6 +59,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const replyMsg = `Ohoo~? Bueno ${target}, eso es interesante pero...`;
-  const image = path.resolve(INTERACTION_RESOLUTION_IMAGE_PATH);
+  const image = path.resolve(IMAGE_CARE);
   return await interactionService.filesReply(replyMsg, [image]);
 }

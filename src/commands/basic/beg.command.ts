@@ -11,10 +11,11 @@ export const data = new SlashCommandBuilder()
   .setName("beg")
   .setDescription("Pidele a Neco-arc unas cuantas monedas como el vagabundo que eres.");
 
-const LIMIT = 50;
 const IMAGE_PATH = "public/img/";
-const IMAGE_FEEDBACK = IMAGE_PATH + "pilk.jpg";
-const IMAGE_FAIL = IMAGE_PATH + "fail.jpg";
+const IMAGE_FEEDBACK = path.join(IMAGE_PATH, "pilk.jpg");
+const IMAGE_FAIL = path.join(IMAGE_PATH, "fail.jpg");
+
+const LIMIT = 50;
 const MINIMUM_AWARDED = 1;
 const MAXIMUM_AWARDED = 10;
 

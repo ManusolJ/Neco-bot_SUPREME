@@ -16,8 +16,8 @@ export const data = new SlashCommandBuilder()
 
 const COST_OF_ACTION = 1;
 const IMAGE_PATH = "public/img/";
-const IMAGE_FEEDBACK = "pilk.jpg";
-const IMAGE_SLAP = "slap.jpg";
+const IMAGE_FEEDBACK = path.join(IMAGE_PATH, "pilk.jpg");
+const IMAGE_SLAP = path.join(IMAGE_PATH, "slap.jpg");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -34,12 +34,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg + reason);
   }
 
-  const coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
+  const balance = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
 
-  if (!coins || coins < COST_OF_ACTION) {
+  if (!balance || balance < COST_OF_ACTION) {
     const feedbackMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;
-    const files = path.resolve(path.join(IMAGE_PATH + IMAGE_FEEDBACK));
-    return await interactionService.feedbackReply(feedbackMsg, [files]);
+    const image = path.resolve(IMAGE_FEEDBACK);
+    return await interactionService.feedbackReply(feedbackMsg, [image]);
   }
 
   try {
@@ -57,7 +57,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (!success) {
-      await necoService.manipulateAgentBalance(author.id, coins - COST_OF_ACTION);
+      await necoService.manipulateAgentBalance(author.id, balance - COST_OF_ACTION);
     }
   } catch (e) {
     const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
@@ -66,6 +66,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const replyMsg = `Wow ${target}! Nice balls, bro!`;
-  const files = path.resolve(path.join(IMAGE_PATH + IMAGE_SLAP));
-  return await interactionService.filesReply(replyMsg, [files]);
+  const image = path.resolve(IMAGE_SLAP);
+  return await interactionService.filesReply(replyMsg, [image]);
 }

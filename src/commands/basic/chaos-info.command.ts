@@ -18,16 +18,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   try {
-    const coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
+    const balance = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
 
-    if (!coins) {
+    if (!balance) {
       const feedbackMsg = `LMAO! No tienes ni una sola moneda! Hueles a pobre.`;
       return await interactionService.feedbackReply(feedbackMsg);
     }
 
     const replyMsg = `${
       author.displayName ?? author.username
-    } tiene unas ${coins} monedas. Creo. Es posible que se me haya olvidado anotar alguno.`;
+    } tiene unas ${balance} monedas. Creo. Es posible que se me haya olvidado anotar alguno.`;
 
     return await interactionService.feedbackReply(replyMsg);
   } catch (e) {

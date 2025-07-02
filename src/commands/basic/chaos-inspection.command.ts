@@ -32,13 +32,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
+  const balance = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
 
-  if (!coins) {
-    const feedbackMsg = "Este schizo no tiene un solo punto! Le falta Pilk, vaya pringao.";
-    return await interactionService.feedbackReply(feedbackMsg);
+  if (!balance) {
+    const replyMsg = "Este schizo no tiene un solo punto! Le falta Pilk, vaya pringao.";
+    return hidden ? await interactionService.feedbackReply(replyMsg) : await interactionService.standardReply(replyMsg);
   } else {
-    const replyMsg = `Veamos, ${target} tiene...${coins > 1 ? `${coins} monedas` : "1 moneda! LMAO, krill issue."}`;
+    const replyMsg = `Veamos, ${target} tiene...${balance > 1 ? `${balance} monedas` : "1 moneda! LMAO, krill issue."}`;
     return hidden ? await interactionService.feedbackReply(replyMsg) : await interactionService.standardReply(replyMsg);
   }
 }

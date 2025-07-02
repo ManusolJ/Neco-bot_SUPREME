@@ -25,11 +25,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const interactionService = new InteractionService(interaction);
 
   const target = interaction.options.getUser("usuario", true);
-  const coins = interaction.options.getInteger("monedas", true);
+  const balance = interaction.options.getInteger("monedas", true);
 
-  if (target.bot) {
-    const errorMsg = `NO puedes usar mis poderes contra mi, bobo!`;
-    return await interactionService.errorReply(errorMsg);
+  if (!target || target.bot) {
+    const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
+    const reason = target.bot
+      ? `NO puedes usar mis poderes contra mi, bobo!`
+      : `NO pude conseguir tu informacion o la del objetivo... Krill issue.`;
+    return await interactionService.errorReply(errorMsg + reason);
   }
 
   try {
@@ -39,9 +42,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await necoService.createAgent(target.id);
     }
 
-    await necoService.manipulateAgentBalance(target.id, coins);
+    await necoService.manipulateAgentBalance(target.id, balance);
 
-    const replyMsg = `Ahora ${target.displayName} tiene ${coins} moneditas!`;
+    const replyMsg = `Ahora ${target.displayName} tiene ${balance} moneditas!`;
     return await interactionService.feedbackReply(replyMsg);
   } catch (e) {
     const errorMsg = `¡NYAAA! Algo salio MUY mal. Intenta de nuevo mas tarde... O diselo a Manuel.`;

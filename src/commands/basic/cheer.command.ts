@@ -17,8 +17,8 @@ export const data = new SlashCommandBuilder()
 
 const COST_OF_ACTION = 1;
 const IMAGE_PATH = "public/img/";
-const IMAGE_FEEDBACK = "pilk.jpg";
-const IMAGE_CHEER = "cheer.jpg";
+const IMAGE_FEEDBACK = path.join(IMAGE_PATH, "pilk.jpg");
+const IMAGE_CHEER = path.join(IMAGE_PATH, "cheer.jpg");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -28,23 +28,23 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const author = interaction.user;
 
   if (!target || target.bot) {
-    const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
+    const errorMsg = `NYAAAHA! Hubo un problema! Este es el motivo: `;
     const reason = target.bot
       ? `NO puedes usar mis poderes contra mi, bobo!`
       : `NO pude conseguir tu informacion o la del objetivo... Krill issue.`;
     return await interactionService.errorReply(errorMsg + reason);
   }
 
-  const coins = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
+  const balance = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
 
-  if (!coins || coins < COST_OF_ACTION) {
+  if (!balance || balance < COST_OF_ACTION) {
     const feedbackMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;
-    const files = path.resolve(path.join(IMAGE_PATH + IMAGE_FEEDBACK));
-    return await interactionService.feedbackReply(feedbackMsg, [files]);
+    const image = path.resolve(IMAGE_FEEDBACK);
+    return await interactionService.feedbackReply(feedbackMsg, [image]);
   }
 
   try {
-    await necoService.manipulateAgentBalance(author.id, coins - COST_OF_ACTION);
+    await necoService.manipulateAgentBalance(author.id, balance - COST_OF_ACTION);
   } catch (e) {
     const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
     console.error(errorMsg, e);
@@ -52,6 +52,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const replyMsg = randomMessageBuilder(data.name, target);
-  const files = path.resolve(path.join(IMAGE_PATH + IMAGE_CHEER));
-  return await interactionService.filesReply(replyMsg, [files]);
+  const image = path.resolve(IMAGE_CHEER);
+  return await interactionService.filesReply(replyMsg, [image]);
 }

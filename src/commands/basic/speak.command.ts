@@ -29,7 +29,8 @@ export const data = new SlashCommandBuilder()
 
 const COST_OF_ACTION = 2;
 const IMAGE_PATH = "public/img/";
-const IMAGE_FEEDBACK = "pilk.jpg";
+const IMAGE_FEEDBACK = path.join(IMAGE_PATH, "pilk.jpg");
+const AUDIO_PATH = "public/audio/";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -54,12 +55,12 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
+  const balance = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
 
-  if (!coins) {
+  if (!balance) {
     const feedbackMsg = `LMAO! No tienes ni una sola moneda! Hueles a pobre.`;
-    const files = path.resolve(path.join(IMAGE_PATH, IMAGE_FEEDBACK));
-    return await interactionService.feedbackReply(feedbackMsg, [files]);
+    const image = path.resolve(IMAGE_FEEDBACK);
+    return await interactionService.feedbackReply(feedbackMsg, [image]);
   }
 
   const voiceChannel = member.voice.channel;
@@ -69,8 +70,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const sound = interaction.options.getString("sonido", true);
-  const audioPath = path.resolve(`public/audio/${sound}.mp3`);
+  const sound = `${interaction.options.getString("sonido", true)}`;
+  const audioPath = path.resolve(`${AUDIO_PATH}${sound}.mp3`);
 
   if (!fs.existsSync(audioPath)) {
     const errorMsg = `Nyaa~ El sonido "${sound}" no existe.`;
@@ -89,7 +90,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       adapterCreator: voiceChannel.guild.voiceAdapterCreator,
     });
 
-    await necoService.manipulateAgentBalance(author.id, coins - COST_OF_ACTION);
+    await necoService.manipulateAgentBalance(author.id, balance - COST_OF_ACTION);
 
     switch (sound) {
       case "pipe":
