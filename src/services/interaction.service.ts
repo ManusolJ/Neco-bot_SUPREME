@@ -15,7 +15,6 @@ const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 export default class InteractionService {
   private interaction: ChatInputCommandInteraction;
-  private hasReplied = false;
 
   constructor(interaction: ChatInputCommandInteraction) {
     this.interaction = interaction;
@@ -66,12 +65,8 @@ export default class InteractionService {
   }
 
   async deferReply(ephemeral = false) {
-    if (this.hasReplied) {
-      throw new Error("Interaction already replied to");
-    }
     try {
       await this.interaction.deferReply({ ephemeral });
-      this.hasReplied = true;
     } catch (error) {
       console.error("Defer reply failed:", error);
       throw error;
@@ -79,7 +74,9 @@ export default class InteractionService {
   }
 
   async deleteReply() {
-    if (!this.hasReplied) return;
+    if (!this.interaction.replied) {
+      throw new Error("No reply to delete");
+    }
     try {
       return await this.interaction.deleteReply();
     } catch (error) {
@@ -89,7 +86,7 @@ export default class InteractionService {
   }
 
   async followReply(content: string | MessagePayload | InteractionReplyOptions) {
-    if (!this.hasReplied) {
+    if (!this.interaction.replied) {
       throw new Error("No initial reply to follow up");
     }
     try {
@@ -102,7 +99,7 @@ export default class InteractionService {
   }
 
   async editReply(content: string | MessagePayload | InteractionEditReplyOptions) {
-    if (!this.hasReplied) {
+    if (!this.interaction.replied) {
       throw new Error("No reply to edit");
     }
     try {
@@ -115,13 +112,8 @@ export default class InteractionService {
   }
 
   private async handleResponse(options: InteractionReplyOptions): Promise<void | InteractionResponse> {
-    if (this.hasReplied) {
-      throw new Error("Interaction already replied to");
-    }
-
     try {
       const response = await this.interaction.reply(options);
-      this.hasReplied = true;
       return response;
     } catch (error) {
       console.error("Reply failed:", error);

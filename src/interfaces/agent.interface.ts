@@ -4,4 +4,6 @@ export default interface ChaosAgent {
   shame: number;
   begged: boolean;
   punished: boolean;
+  created_at?: Date;
+  last_updated?: Date;
 }
