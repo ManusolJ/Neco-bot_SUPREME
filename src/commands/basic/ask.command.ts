@@ -15,6 +15,9 @@ export const data = new SlashCommandBuilder()
   );
 
 const COST_OF_ACTION = 1;
+const IMAGE_PATH = "public/img/";
+const NO_BALANCE_IMAGE_PATH = IMAGE_PATH + "pilk.jpg";
+const INTERACTION_RESOLUTION_IMAGE_PATH = IMAGE_PATH + "care.jpg";
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -23,10 +26,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const author = interaction.user;
   const target = interaction.options.getUser("usuario", true) ?? null;
 
-  let coins = null;
+  let balance = null;
 
   try {
-    coins = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
+    balance = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
   } catch (e) {
     const errorMsg = `Uuh... Hubo un error intentado controlar el saldo caotico... `;
     console.error(errorMsg, e);
@@ -41,14 +44,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg + reason);
   }
 
-  if (!coins || coins < COST_OF_ACTION) {
-    const imagePath = path.resolve("public/img/pilk.jpg");
+  if (!balance || balance < COST_OF_ACTION) {
+    const image = path.resolve(NO_BALANCE_IMAGE_PATH);
     const errorMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;
-    return await interactionService.feedbackReply(errorMsg, [imagePath]);
+    return await interactionService.feedbackReply(errorMsg, [image]);
   }
 
   try {
-    await necoService.manipulateAgentBalance(author.id, coins - COST_OF_ACTION);
+    await necoService.manipulateAgentBalance(author.id, balance - COST_OF_ACTION);
   } catch (e) {
     const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
     console.error(errorMsg, e);
@@ -56,6 +59,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const replyMsg = `Ohoo~? Bueno ${target}, eso es interesante pero...`;
-  const imagePath = path.resolve("public/img/care.jpg");
-  return await interactionService.filesReply(replyMsg, [imagePath]);
+  const image = path.resolve(INTERACTION_RESOLUTION_IMAGE_PATH);
+  return await interactionService.filesReply(replyMsg, [image]);
 }

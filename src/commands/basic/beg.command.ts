@@ -13,8 +13,8 @@ export const data = new SlashCommandBuilder()
 
 const LIMIT = 50;
 const IMAGE_PATH = "public/img/";
-const IMAGE_FEEDBACK = "pilk.jpg";
-const IMAGE_FAIL = "fail.jpg";
+const IMAGE_FEEDBACK = IMAGE_PATH + "pilk.jpg";
+const IMAGE_FAIL = IMAGE_PATH + "fail.jpg";
 const MINIMUM_AWARDED = 1;
 const MAXIMUM_AWARDED = 10;
 
@@ -26,19 +26,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   let isLocked = false;
 
   try {
-    if (!author) {
-      const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
-      return await interactionService.errorReply(errorMsg);
-    }
-
-    if (isUserLocked(author.id)) {
-      const feedbackMsg = "¡Ya estas pidiendo! Espera a que termine, impaciente.";
-      return await interactionService.feedbackReply(feedbackMsg);
-    }
-
-    lockUser(author.id);
-    isLocked = true;
-
     if (!interaction.inGuild() || !interaction.guild) {
       const errorMsg = "NYAAAHA! Este comando solo puede usar en el servidor!";
       return await interactionService.errorReply(errorMsg);
@@ -51,7 +38,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return await interactionService.errorReply(errorMsg);
     }
 
-    let agent = await necoService.getAgent(author.id);
+    if (isUserLocked(author.id)) {
+      const feedbackMsg = "¡Ya estas pidiendo! Espera a que termine, impaciente.";
+      return await interactionService.feedbackReply(feedbackMsg);
+    }
+
+    lockUser(author.id);
+    isLocked = true;
+
+    let agent = await necoService.getAgent(member.id);
 
     if (!agent) {
       await necoService.createAgent(author.id);
@@ -61,15 +56,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (!agent) throw new Error("Agent creation failed");
 
     if (agent.begged) {
-      const msg = "¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!";
-      const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FEEDBACK));
-      return await interactionService.feedbackReply(msg, [imgPath]);
+      const feedbackMsg = "¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!";
+      const image = path.resolve(IMAGE_FEEDBACK);
+      return await interactionService.feedbackReply(feedbackMsg, [image]);
     }
 
     if (agent.balance >= LIMIT) {
-      const msg = "¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia.";
-      const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FEEDBACK));
-      return await interactionService.feedbackReply(msg, [imgPath]);
+      const feedbackMsg = "¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia.";
+      const image = path.resolve(IMAGE_FEEDBACK);
+      return await interactionService.feedbackReply(feedbackMsg, [image]);
     }
 
     let success = Math.random() < 0.8;
@@ -83,15 +78,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     }
 
     if (!success) {
-      await necoService.manipulateAgentBegState(author.id, true);
-      const msg = randomMessageBuilder("begFail");
-      const imgPath = path.resolve(path.join(IMAGE_PATH, IMAGE_FAIL));
-      return await interactionService.followReply({ content: msg, files: [imgPath] });
+      await necoService.manipulateAgentBegState(member.id, true);
+      const replyMsg = randomMessageBuilder("begFail");
+      const image = path.resolve(IMAGE_FAIL);
+      return await interactionService.followReply({ content: replyMsg, files: [image] });
     }
 
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);
-    await necoService.manipulateAgentBegState(author.id, true);
-    await necoService.manipulateAgentBalance(author.id, agent.balance + awarded);
+    await necoService.manipulateAgentBegState(member.id, true);
+    await necoService.manipulateAgentBalance(member.id, agent.balance + awarded);
     const replyMsg = `${randomMessageBuilder(data.name, author)} ${
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;
