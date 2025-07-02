@@ -24,6 +24,8 @@ declare global {
       NECO_ALTAR_CHANNEL: string;
 
       COPYPASTA_URL: string;
+
+      USER_JAN: string;
     }
   }
 }

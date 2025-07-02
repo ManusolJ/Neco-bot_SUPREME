@@ -9,6 +9,7 @@ import { execute as slap } from "@commands/basic/slap.command";
 import { execute as cheer } from "@commands/basic/cheer.command";
 import { execute as speak } from "@commands/basic/speak.command";
 import { execute as timer } from "@commands/basic/timer.command";
+import { execute as zaza } from "@commands/basic/zaza.command";
 
 export default function interactionListener(client: Client) {
   client.on(Events.InteractionCreate, async (interaction) => {
@@ -41,6 +42,9 @@ export default function interactionListener(client: Client) {
         break;
       case "timer":
         await timer(interaction);
+        break;
+      case "zaza":
+        await zaza(interaction);
         break;
     }
   });
