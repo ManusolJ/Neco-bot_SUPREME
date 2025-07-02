@@ -42,17 +42,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.feedbackReply(feedbackMsg, [image]);
   }
 
+  let success;
+
   try {
     const jan = process.env.USER_JAN;
-    console.log(jan);
-    let success;
+
     if (jan) {
       const targetIsJan = target.id === jan;
-      console.log(targetIsJan);
 
       if (targetIsJan) {
         success = Math.random() > 0.5;
-        console.log(success);
       }
       if (success) {
         const replyMsg = `¡Vaya! Con que alguien quiere slapear las bolas de Jan... Pues venga, esta es gratis. Pero no te acostumbres`;
@@ -71,5 +70,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const replyMsg = `Wow ${target}! Nice balls, bro!`;
   const image = path.resolve(IMAGE_SLAP);
-  return await interactionService.filesReply(replyMsg, [image]);
+  return success
+    ? await interactionService.followReply({ content: replyMsg, files: [image] })
+    : await interactionService.filesReply(replyMsg, [image]);
 }
