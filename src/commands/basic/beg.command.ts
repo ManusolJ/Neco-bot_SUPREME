@@ -72,10 +72,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     const cultistRole = process.env.CULTIST_ROLE;
 
+    let secondTry;
+
     if (!success && cultistRole && member.roles.cache.has(cultistRole)) {
       const replyMsg = "Fallaste! Menuda skill iss- Ah, espera... Que eres uno de mis fieles. Venga, otro intento...";
       await interactionService.standardReply(replyMsg);
       success = Math.random() < 0.6;
+      success ? (secondTry = true) : (secondTry = false);
     }
 
     if (!success) {
@@ -92,7 +95,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;
 
-    return await interactionService.standardReply(replyMsg);
+    return secondTry
+      ? await interactionService.followReply(replyMsg)
+      : await interactionService.standardReply(replyMsg);
   } catch (e) {
     const errorMsg = `Hubo un PROBLEMA! El siguiente: `;
     console.error(errorMsg, e);
