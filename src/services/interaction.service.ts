@@ -86,9 +86,6 @@ export default class InteractionService {
   }
 
   async followReply(content: string | MessagePayload | InteractionReplyOptions) {
-    if (!this.interaction.replied) {
-      throw new Error("No initial reply to follow up");
-    }
     try {
       const result = await this.interaction.followUp(content);
       return result;
@@ -99,9 +96,6 @@ export default class InteractionService {
   }
 
   async editReply(content: string | MessagePayload | InteractionEditReplyOptions) {
-    if (!this.interaction.replied) {
-      throw new Error("No reply to edit");
-    }
     try {
       const result = await this.interaction.editReply(content);
       return result;
