@@ -135,7 +135,9 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
     };
   }
 
-  if (data.prediction.confidence < 0.75) {
+  const prediction = data.predictions[0];
+
+  if (prediction.confidence < 0.75) {
     const replyMsg = "No estoy muy seguro de que es eso... Has probado a limpiar tu camara, pedazo de guarro?";
     return {
       status: "lowConfidence",
@@ -143,7 +145,7 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
     };
   }
 
-  if (data.prediction.class) {
+  if (prediction.class) {
     return {
       status: "success",
       message: randomMessageBuilder("monsterSuccess", user),

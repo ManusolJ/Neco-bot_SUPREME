@@ -2,7 +2,7 @@ export default interface ImageClassification {
   id: string;
   time: number;
   image: Image;
-  prediction: Prediction;
+  predictions: Prediction[];
 }
 
 interface Image {
