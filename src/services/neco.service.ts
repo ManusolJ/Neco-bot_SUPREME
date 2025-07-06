@@ -1,5 +1,5 @@
 import type { Pool } from "pg";
-import type ChaosAgent from "@interfaces/agent.interface";
+import type Agent from "@interfaces/agent.interface";
 import { getDb } from "../db";
 
 const AGENT_TABLE = "agents";
@@ -20,15 +20,15 @@ export default class NecoService {
     return NecoService.instance;
   }
 
-  async getAgent(id: string): Promise<ChaosAgent | null> {
+  async getAgent(id: string): Promise<Agent | null> {
     const sql = `SELECT * FROM ${AGENT_TABLE} WHERE id = $1`;
-    const { rows } = await this.pool.query<ChaosAgent>(sql, [id]);
+    const { rows } = await this.pool.query<Agent>(sql, [id]);
     return rows[0] || null;
   }
 
-  async getAllAgents(): Promise<ChaosAgent[] | null> {
+  async getAllAgents(): Promise<Agent[] | null> {
     const sql = `SELECT * FROM ${AGENT_TABLE}`;
-    const { rows } = await this.pool.query<ChaosAgent>(sql);
+    const { rows } = await this.pool.query<Agent>(sql);
     return rows.length ? rows : null;
   }
 
