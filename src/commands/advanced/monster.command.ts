@@ -91,7 +91,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       if (isFriday) {
         return interactionService.followReply(result.message);
       } else {
-        return interactionService.followReply("Ni Monster ni viernes… ¿Qué clase de blasfemia es esta?");
+        return interactionService.followReply(
+          "Ni Monster ni viernes… ¿Qué clase de blasfemia es esta? A la proxima te desintegro."
+        );
       }
 
     case "error":

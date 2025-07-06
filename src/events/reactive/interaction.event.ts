@@ -47,7 +47,7 @@ export default function interactionListener(client: Client) {
       case "zaza":
         await zaza(interaction);
         break;
-      case "monster":
+      case "monster-time":
         await monster(interaction);
         break;
     }
