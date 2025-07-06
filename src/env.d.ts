@@ -14,6 +14,7 @@ declare global {
       HOLE_ROLE: string;
       FUNNY_ROLE: string;
       CULTIST_ROLE: string;
+      HERETIC_ROLE: string;
 
       MAIN_VOICE_CHANNEL: string;
       FUNNY_CHAIR_CHANNEL: string;
@@ -24,6 +25,11 @@ declare global {
       NECO_ALTAR_CHANNEL: string;
 
       COPYPASTA_URL: string;
+      ROBOFLOW_URL: string;
+
+      ROBOFLOW_API_KEY: string;
+      MODEL_NAME: string;
+      MODEL_VERSION: string;
 
       USER_JAN: string;
     }
