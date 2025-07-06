@@ -88,14 +88,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 async function detectMonster(imageUrl: string): Promise<boolean> {
-  const imageResponse = await fetch(imageUrl);
-  const arrayBuffer = await imageResponse.arrayBuffer();
-  const base64Data = Buffer.from(arrayBuffer).toString("base64");
+  const res = await fetch(imageUrl);
+  const buffer = await res.arrayBuffer();
+  const base64Data = Buffer.from(buffer).toString("base64");
 
   const response = await fetch(ROBOFLOW_ENDPOINT, {
     method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ image: base64Data }),
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: base64Data,
   });
 
   if (!response.ok) {
@@ -104,10 +106,5 @@ async function detectMonster(imageUrl: string): Promise<boolean> {
   }
 
   const data: ImageClassification = await response.json();
-
-  return (
-    data.confidence > 0.75 &&
-    data.top !== "none" &&
-    data.predictions.some((p) => p.class !== null && p.class !== "none" && p.confidence > 0.75)
-  );
+  return data.confidence > 0.75 && data.top !== "none";
 }
