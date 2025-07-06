@@ -63,7 +63,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const replyMsg = `Uno de mis fieles desea mostrar su devocion con una foto de monster eh?... Veamos...`;
-  await interactionService.standardReply(replyMsg);
+  await interactionService.filesReply(replyMsg, [sentImage.url]);
 
   const result = await detectMonster(sentImage.url, author);
   const now = new Date();
