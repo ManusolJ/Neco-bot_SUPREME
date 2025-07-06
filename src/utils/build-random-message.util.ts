@@ -16,6 +16,10 @@ export default function randomMessageBuilder(option: string, user?: User, level:
       return buildMessage(failMessages, displayName);
     case "timer":
       return buildMessage(timerMessages, displayName);
+    case "monsterSuccess":
+      return buildMessage(monsterSuccessMessages, displayName);
+    case "monsterFail":
+      return buildMessage(monsterFailMessages, displayName);
     case "insult": {
       const messages = insultmessages[level as keyof typeof insultmessages] ?? insultmessages.light;
       return randomizeMessage(messages);
@@ -134,3 +138,20 @@ const insultmessages = {
     "¿Quieres un abrazo, un psicólogo, o drogas? Porque algo necesitas.",
   ],
 };
+
+const monsterSuccessMessages: string[] = [
+  "Felicidades user! Has conseguido unos cuantos puntos!... A cambio de hacer piedras del riñon, pero a quien le importa eso, eh?",
+  "¡user, maestro caótico! Cada vez que mandas un monster, un catalan consigue escapar de cataluña.",
+  "Aplausos para user: unos de mis mas devotos... devotos. Uh, si lo que sea.",
+  "¡Éxito! user, puedo oler el dulce, dulce olor de... quimicos con cafeina. Disfruta tus puntos.",
+  "Que buen monstruo tienes ahi, user. Y la lata de bebida energetica tambien es bien adecuada.",
+  "Vaya! Que buen monstruo tienes ahi, pillin... Has demonstrado tu devocion por las tradiciones, asi que te regalo unos cuantos puntos. No te lo gastes todo slapeando las bolas de jan",
+];
+
+const monsterFailMessages: string[] = [
+  "…Huh, user? Eso no parece Monster. No hay puntos para mamaguevos.",
+  "Ni rastro de Monster, user. Intenta usar tu compresion lectora para comprender que... quiero fotos de Monsters.",
+  "No todos los recipientes verdes son Monster, user. Sigue intentado usar tus neuronas.",
+  "Fallaste, user. Voy a tener que tacharte de la lista de 'buenas criaturas'... y añadirte a la lista de 'Exterminio express™'",
+  "Nada por aquí, user. Quizá estabas sosteniendo tus pensamientos... Vacios e intangibles.",
+];
