@@ -92,6 +92,12 @@ async function detectMonster(imageUrl: string): Promise<boolean> {
   const buffer = await res.arrayBuffer();
   const base64Data = Buffer.from(buffer).toString("base64");
 
+  console.log("res:", res);
+
+  console.log("buffer: ", buffer);
+
+  console.log("base64: ", base64Data);
+
   const response = await fetch(ROBOFLOW_ENDPOINT, {
     method: "POST",
     headers: {
