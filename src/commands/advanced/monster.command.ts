@@ -128,7 +128,7 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
 
   const data: ImageClassification = await response.json();
 
-  if (data == null) {
+  if (data.predictions == null) {
     return {
       status: "fail",
       message: randomMessageBuilder("monsterFail", user),
