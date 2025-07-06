@@ -28,7 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   const guild = interaction.guild;
   const author = interaction.user;
-  const sentImage = interaction.options.getAttachment("prueba", true);
+  const sentImage = interaction.options.getAttachment("lienzo", true);
 
   if (!author || !sentImage) {
     const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
