@@ -88,10 +88,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 }
 
 async function detectMonster(imageUrl: string): Promise<boolean> {
+  const imageResponse = await fetch(imageUrl);
+  const arrayBuffer = await imageResponse.arrayBuffer();
+  const base64Data = Buffer.from(arrayBuffer).toString("base64");
+
   const response = await fetch(ROBOFLOW_ENDPOINT, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ image: imageUrl }),
+    body: new URLSearchParams({ image: base64Data }),
   });
 
   if (!response.ok) {
