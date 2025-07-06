@@ -1,15 +1,20 @@
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import { ChatInputCommandInteraction, SlashCommandBuilder, User } from "discord.js";
 import { env } from "process";
 
+import ImageClassification from "@interfaces/image-classification.interface";
+import DetectionResponse from "@interfaces/detection-response.interface";
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
-import { ImageClassification } from "@interfaces/image-classification.interface";
+import randomMessageBuilder from "@utils/build-random-message.util";
 
 export const data = new SlashCommandBuilder()
-  .setName("monster")
-  .setDescription("Manda una foto de tu monster en viernes como la tradicion demanda.")
+  .setName("monster-time")
+  .setDescription("Presume tu Monster Energy y demuestra tu lealtad al culto… o enfréntate al exilio.")
   .addAttachmentOption((option) =>
-    option.setName("prueba").setDescription("Tienes que añadir la foto para probar tu devocion.").setRequired(true)
+    option
+      .setName("lienzo")
+      .setDescription("Carga la obra maestra líquida con la probaras tu devocion.")
+      .setRequired(true)
   );
 
 const REWARD = 5;
@@ -20,8 +25,6 @@ const SPAIN_TIMEZONE = "Europe/Madrid";
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
   const interactionService = new InteractionService(interaction);
-
-  await interactionService.deferReply(true);
 
   const guild = interaction.guild;
   const author = interaction.user;
@@ -59,35 +62,47 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.errorReply(errorMsg);
   }
 
-  const result = await detectMonster(sentImage.url);
+  const replyMsg = `Uno de mis fieles desea mostrar su devocion con una foto de monster eh?... Veamos...`;
+  await interactionService.standardReply(replyMsg);
+
+  const result = await detectMonster(sentImage.url, author);
   const now = new Date();
   const spainTime = new Date(now.toLocaleString("en-US", { timeZone: SPAIN_TIMEZONE }));
   const isFriday = spainTime.getDay() === 5;
 
-  if (result && isFriday) {
-    const newBalance = agent.balance + REWARD;
-    await necoService.manipulateAgentBalance(author.id, newBalance);
-    const replyMsg = `Vaya! Que buen monstruo tienes ahi, pillin... Has demonstrado tu devocion por las tradiciones, asi que te regalo esto: ${REWARD} puntos. No te lo gastes todo slapeando las bolas de jan`;
-    return interactionService.followReply(replyMsg);
-  } else if (result && !isFriday) {
-    if (PUNISHMENT_ROLE) {
-      const member = await guild.members.fetch(author.id);
-      await member.roles.add(PUNISHMENT_ROLE);
-    }
+  switch (result.status) {
+    case "success":
+      if (isFriday) {
+        const newBalance = agent.balance + REWARD;
+        await necoService.manipulateAgentBalance(author.id, newBalance);
+        return interactionService.followReply(result.message);
+      } else {
+        if (PUNISHMENT_ROLE) {
+          const member = await guild.members.fetch(author.id);
+          await member.roles.add(PUNISHMENT_ROLE);
+        }
+        return interactionService.followReply("Fantástico Monster, pero hoy no es viernes… Tu herejía será marcada.");
+      }
 
-    return interactionService.followReply(
-      "Fantástico monster que tienes ahí... PERO!!!! Hoy no es viernes, heretico. Quedas castigado."
-    );
-  } else if (!result && isFriday) {
-    return interactionService.followReply("...Huh? Eso ni siquiera parece un monster. Serás bobo.");
-  } else {
-    return interactionService.followReply(
-      "Eso ni siquiera es un monster... y encima hoy no es viernes. ¿Qué intentas? A la proxima te desintegro."
-    );
+    case "lowConfidence":
+      return interactionService.followReply(result.message);
+
+    case "fail":
+      if (isFriday) {
+        return interactionService.followReply(result.message);
+      } else {
+        return interactionService.followReply("Ni Monster ni viernes… ¿Qué clase de blasfemia es esta?");
+      }
+
+    case "error":
+      return interactionService.followReply(result.message);
+
+    default:
+      return interactionService.followReply("Algo insólito ha ocurrido. Ni el caos lo predijo.");
   }
 }
 
-async function detectMonster(imageUrl: string): Promise<boolean> {
+async function detectMonster(imageUrl: string, user: User): Promise<DetectionResponse> {
   const res = await fetch(imageUrl);
   const buffer = await res.arrayBuffer();
   const base64Data = Buffer.from(buffer).toString("base64");
@@ -102,9 +117,32 @@ async function detectMonster(imageUrl: string): Promise<boolean> {
 
   if (!response.ok) {
     console.error("Roboflow error:", response.statusText);
-    return false;
+    const errorMsg = `Uuuh... Mira, pruebas mas tarde o avisa a Manuel. Mis habilidades cognitivas no funcionan ahora mismo lmao.`;
+    return {
+      status: "fail",
+      message: errorMsg,
+    };
   }
 
   const data: ImageClassification = await response.json();
-  return data.confidence > 0.75 && data.top !== "none";
+
+  if (data.confidence < 0.75) {
+    const replyMsg = "No estoy muy seguro de que es eso... Has probado a limpiar tu camara, pedazo de guarro?";
+    return {
+      status: "lowConfidence",
+      message: replyMsg,
+    };
+  }
+
+  if (data.predictions.some((p) => p.class !== "none" || p.class !== null)) {
+    return {
+      status: "success",
+      message: randomMessageBuilder("monsterSuccess", user),
+    };
+  } else {
+    return {
+      status: "fail",
+      message: randomMessageBuilder("monsterFail", user),
+    };
+  }
 }
