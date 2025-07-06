@@ -136,6 +136,8 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
     };
   }
 
+  console.log(response.json());
+
   console.log(data);
 
   if (data.predictions.some((p) => p.class !== "none" || p.class !== null)) {
