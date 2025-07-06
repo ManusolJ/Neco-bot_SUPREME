@@ -66,7 +66,7 @@ export default class InteractionService {
 
   async deferReply(ephemeral = false) {
     try {
-      await this.interaction.deferReply({ ephemeral });
+      ephemeral ? this.interaction.deferReply({ flags: "Ephemeral" }) : this.interaction.deferReply();
     } catch (error) {
       console.error("Defer reply failed:", error);
       throw error;

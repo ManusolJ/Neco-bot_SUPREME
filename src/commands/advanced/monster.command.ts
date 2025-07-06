@@ -68,20 +68,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const newBalance = agent.balance + REWARD;
     await necoService.manipulateAgentBalance(author.id, newBalance);
     const replyMsg = `Vaya! Que buen monstruo tienes ahi, pillin... Has demonstrado tu devocion por las tradiciones, asi que te regalo esto: ${REWARD} puntos. No te lo gastes todo slapeando las bolas de jan`;
-    return interactionService.standardReply(replyMsg);
+    return interactionService.followReply(replyMsg);
   } else if (result && !isFriday) {
     if (PUNISHMENT_ROLE) {
       const member = await guild.members.fetch(author.id);
       await member.roles.add(PUNISHMENT_ROLE);
     }
 
-    return interactionService.standardReply(
+    return interactionService.followReply(
       "Fantástico monster que tienes ahí... PERO!!!! Hoy no es viernes, heretico. Quedas castigado."
     );
   } else if (!result && isFriday) {
-    return interactionService.standardReply("...Huh? Eso ni siquiera parece un monster. Serás bobo.");
+    return interactionService.followReply("...Huh? Eso ni siquiera parece un monster. Serás bobo.");
   } else {
-    return interactionService.standardReply(
+    return interactionService.followReply(
       "Eso ni siquiera es un monster... y encima hoy no es viernes. ¿Qué intentas? A la proxima te desintegro."
     );
   }
