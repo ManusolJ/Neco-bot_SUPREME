@@ -62,7 +62,7 @@ export default class NecoService {
     return rowCount ? rowCount > 0 : false;
   }
 
-  async manipulateAgentRoleState(id: string, state: boolean): Promise<boolean> {
+  async manipulateAgentPunishmentState(id: string, state: boolean): Promise<boolean> {
     const sql = `UPDATE ${AGENT_TABLE} SET punished = $1 WHERE id = $2`;
     const { rowCount } = await this.pool.query(sql, [state, id]);
     return rowCount ? rowCount > 0 : false;
