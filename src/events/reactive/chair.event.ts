@@ -22,7 +22,7 @@ export default function chairEvent(client: Client): void {
   client.on(Events.VoiceStateUpdate, async (oldState, newState) => chairEventHandler(client, oldState, newState));
 }
 
-async function chairEventHandler(client: Client, oldState: VoiceState, newState: VoiceState) {
+async function chairEventHandler(client: Client, oldState: VoiceState, newState: VoiceState): Promise<void> {
   if (!NECO_MESSAGES_CHANNEL_ID || !MAIN_VOICE_CHANNEL_ID || !FUNNY_CHAIR_CHANNEL_ID || !FUNNY_ROLE_ID || !GUILD_ID) {
     console.error("Hubo un problema intentando recuperar variables de entorno.");
     return;
