@@ -47,6 +47,13 @@ async function scheduledTask(client: Client): Promise<void> {
     },
   });
 
+  if (!response.ok) {
+    console.error("Hubo un error al intentar conseguir la respuesta de reddit.");
+    const errorMsg = "NYAHAA! No he podido conseguir nada de reddit! Basura de pagina.";
+    messageService.sendError(errorMsg);
+    return;
+  }
+
   const data: RedditREST = await response.json();
 
   if (!data) {
