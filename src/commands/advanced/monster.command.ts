@@ -137,6 +137,15 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
 
   const prediction = data.predictions[0];
 
+  if (prediction == null || prediction.class == null) {
+    const errorMsg =
+      "Uuuh... Mira, pruebas mas tarde o avisa a Manuel. Mis habilidades cognitivas no funcionan ahora mismo lmao.";
+    return {
+      status: "error",
+      message: errorMsg,
+    };
+  }
+
   if (prediction.confidence < 0.75) {
     const replyMsg = "No estoy muy seguro de que es eso... Has probado a limpiar tu camara, pedazo de guarro?";
     return {
