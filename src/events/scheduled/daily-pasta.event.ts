@@ -76,17 +76,13 @@ async function scheduledTask(client: Client): Promise<void> {
 }
 
 function getPastaFromData(data: RedditREST): string {
-  const validPosts = data.data.children;
+  const validPosts = data.data.children.filter(
+    (post) => post.data.selftext.length > 0 && post.data.selftext.length < 2000
+  );
 
   if (!validPosts.length) return "";
 
-  let randomPost = validPosts[Math.floor(Math.random() * validPosts.length)];
-
-  while (randomPost && randomPost.data.selftext.length >= 2000) {
-    randomPost = validPosts[Math.floor(Math.random() * validPosts.length)];
-  }
-
-  if (!randomPost) return "";
+  const randomPost = validPosts[Math.floor(Math.random() * validPosts.length)];
 
   return `**${randomPost.data.title}**\n\n${randomPost.data.selftext.replace(/\^\(.*?\)\s?/g, "").substring(0, 1800)}`;
 }
