@@ -1,8 +1,10 @@
-import "dotenv/config";
 import { REST, Routes, type RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js";
 import { readdir } from "fs/promises";
 import { fileURLToPath, pathToFileURL } from "url";
 import path from "path";
+import { env } from "process";
+import readline from "node:readline/promises";
+import { stdin as input, stdout as output } from "node:process";
 
 const green = (msg: string) => `\x1b[32m${msg}\x1b[0m`;
 const red = (msg: string) => `\x1b[31m${msg}\x1b[0m`;
@@ -11,8 +13,14 @@ const yellow = (msg: string) => `\x1b[33m${msg}\x1b[0m`;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
+const rl = readline.createInterface({ input, output });
 
+async function getGuildId(): Promise<string> {
+  console.log(yellow("\nSetting Guild ID for commands registration..."));
+  return rl.question("Please enter GUILD_ID: ");
+}
+
+const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [];
 const commandsPath = path.resolve(__dirname, "./commands");
 
 async function getAllCommandFiles(dir: string): Promise<string[]> {
@@ -33,7 +41,6 @@ const commandFiles = await getAllCommandFiles(commandsPath);
 for (const file of commandFiles) {
   try {
     const commandModule = await import(pathToFileURL(file).href);
-
     const command = commandModule.default ?? commandModule;
 
     if ("data" in command && "execute" in command) {
@@ -49,18 +56,21 @@ for (const file of commandFiles) {
   }
 }
 
-const rest = new REST().setToken(process.env.BOT_TOKEN);
+const rest = new REST();
+rest.setToken(env.BOT_TOKEN);
 
 try {
   console.log(yellow("Started refreshing application (/) commands..."));
 
-  await rest.put(Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), {
-    body: commands,
-  });
+  const guildId = await getGuildId();
+
+  await rest.put(Routes.applicationGuildCommands(env.CLIENT_ID!, guildId), { body: commands });
 
   console.log(green("Successfully reloaded application (/) commands."));
   process.exit(0);
 } catch (error) {
   console.error(red("Failed to register commands:"), error);
   process.exit(1);
+} finally {
+  rl.close();
 }
