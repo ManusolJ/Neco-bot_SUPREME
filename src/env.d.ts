@@ -27,6 +27,9 @@ declare global {
       COPYPASTA_URL: string;
       ROBOFLOW_URL: string;
       TRIVIA_URL: string;
+      TRANSLATION_URL: string;
+
+      TRANSLATION_API_KEY: string;
 
       ROBOFLOW_API_KEY: string;
       MODEL_NAME: string;
