@@ -1,5 +1,6 @@
 import { Client, Events } from "discord.js";
 
+// Command handlers
 import { execute as ask } from "@commands/basic/ask.command";
 import { execute as beg } from "@commands/basic/beg.command";
 import { execute as info } from "@commands/basic/chaos-info.command";
@@ -12,10 +13,18 @@ import { execute as timer } from "@commands/basic/timer.command";
 import { execute as zaza } from "@commands/basic/zaza.command";
 import { execute as monster } from "@commands/advanced/monster.command";
 
+/**
+ * Central interaction router for slash commands
+ * Maps command names to their execution handlers
+ *
+ * @param client Discord.js Client instance
+ */
 export default function interactionListener(client: Client) {
   client.on(Events.InteractionCreate, async (interaction) => {
+    // Only handle slash commands
     if (!interaction.isChatInputCommand()) return;
 
+    // Route to appropriate command handler
     switch (interaction.commandName) {
       case "ask":
         await ask(interaction);

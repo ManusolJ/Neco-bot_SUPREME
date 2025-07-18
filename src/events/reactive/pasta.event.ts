@@ -6,39 +6,43 @@ import chaosBuilder from "@utils/build-chaos.util";
 import reactionBuilder from "@utils/build-reaction.util";
 import randomMessageBuilder from "@utils/build-random-message.util";
 
+/**
+ * Event handler for copypasta channel
+ * Rewards users for posting content with specific prefix
+ *
+ * @param client Discord.js Client instance
+ */
 export default function pastaEvent(client: Client): void {
   client.on(Events.MessageCreate, async (message) => {
-    if (message && message.channelId === process.env.COPYPASTA_CHANNEL) {
-      const necoService = await NecoService.getInstance();
-      const author = message.author;
-      const guild = message.guild;
+    // Only process messages in designated channel
+    if (message && message.channelId !== process.env.COPYPASTA_CHANNEL) return;
 
-      if (author.bot || !guild) return;
+    const necoService = await NecoService.getInstance();
+    const author = message.author;
+    const guild = message.guild;
 
-      const isPasta = message.content.startsWith("Pasta:");
+    // Ignore bots and DMs
+    if (author.bot || !guild) return;
 
-      if (!isPasta) return;
+    // Validate message format
+    const isPasta = message.content.startsWith("Pasta:");
+    if (!isPasta) return;
 
-      const channel = guild.channels.cache.get(message.channel.id);
+    // Validate text channel
+    const channel = guild.channels.cache.get(message.channel.id);
+    if (!channel?.isTextBased()) return;
 
-      if (!channel || !channel.isTextBased()) return;
+    const msgService = new MessageService(channel);
 
-      const msgService = new MessageService(channel);
+    // Reward user with random points
+    await necoService.manipulateAgentBalance(author.id, chaosBuilder(1, 5));
 
-      await necoService.manipulateAgentBalance(author.id, chaosBuilder(1, 5));
+    // Generate random response
+    const msg = randomMessageBuilder("copypasta", author);
+    if (!msg) return;
 
-      const msg = randomMessageBuilder("copypasta", author);
-
-      if (!msg) return;
-
-      try {
-        await msgService.send(msg);
-        await reactionBuilder(message);
-      } catch (e) {
-        console.error(e);
-        const errorMsg = "...Pero no he podido darte puntos! No preguntes porque, no lo se! Nyahahaahaha!";
-        await msgService.sendError(msg + errorMsg);
-      }
-    }
+    // Send response and add reaction
+    await msgService.send(msg);
+    await reactionBuilder(message);
   });
 }
