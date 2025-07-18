@@ -13,7 +13,7 @@ const FUNNY_ROLE_ID = env.FUNNY_ROLE;
 
 // Punishment configuration
 const PUNISHED = true; // Constant for punishment state
-const TIME = 1000 * 60 * 60; // 1 hour in milliseconds
+const PUNISHMENT_TIME = 1000 * 60 * 60; // 1 hour in milliseconds
 
 /**
  * Event handler for voice channel interactions
@@ -122,5 +122,5 @@ async function chairEventHandler(client: Client, oldState: VoiceState, newState:
       const msg = `${refreshedTarget.displayName} ha sido liberado de la marca del cuck! Oops... Lo he dicho en voz alta? (¬‿¬) Nyehehe~~`;
       await messageService.send(msg);
     }
-  }, TIME);
+  }, PUNISHMENT_TIME);
 }
