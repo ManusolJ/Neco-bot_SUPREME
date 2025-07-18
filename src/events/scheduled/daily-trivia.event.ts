@@ -33,7 +33,7 @@ const MAXIMUM_REWARD = 4;
 export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
     // Schedule daily at 5:30 PM Madrid time
-    cron.schedule("30 17 * * *", async () => scheduledTask(client), {
+    cron.schedule("30 18 * * *", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
@@ -78,7 +78,7 @@ async function scheduledTask(client: Client): Promise<void> {
   }
 
   const question = triviaQuestion.results[0];
-  if (!question || question.question || !question.correct_answer || !question.incorrect_answers) {
+  if (!question ||!question.question || !question.correct_answer || !question.incorrect_answers) {
     console.error("Invalid trivia question format.");
     return;
   }
