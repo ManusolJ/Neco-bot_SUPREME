@@ -23,7 +23,7 @@ const MAXIMUM_REWARD = 4;
 
 export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
-    cron.schedule("59 03 * * *", async () => scheduledTask(client), {
+    cron.schedule("05 04 * * *", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
@@ -62,7 +62,7 @@ async function scheduledTask(client: Client): Promise<void> {
 
   const question = triviaQuestion.results[0];
 
-  if (!question || !question.question || !question.correctAnswer || !question.incorrectAnswers) {
+  if (!question || !question.question || !question.correct_answer || !question.incorrect_answers) {
     console.error("Invalid trivia question format.");
     console.log("Question:", question);
     return;
@@ -95,7 +95,7 @@ async function scheduledTask(client: Client): Promise<void> {
   const questionMsg = `Ahi va! Pregunta: ${translatedQuestion.question}`;
   await messageService.send(questionMsg);
 
-  const shuffledAnswers = shuffleAnswers([translatedQuestion.correctAnswer, ...translatedQuestion.incorrectAnswers]);
+  const shuffledAnswers = shuffleAnswers([translatedQuestion.correct_answer, ...translatedQuestion.incorrect_answers]);
 
   const pollMsg = await messageService.send({
     poll: {
@@ -130,7 +130,7 @@ async function scheduledTask(client: Client): Promise<void> {
     await messageService.send(endMsg);
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
-    const correct = poll.answers.find((a) => a.text === translatedQuestion.correctAnswer);
+    const correct = poll.answers.find((a) => a.text === translatedQuestion.correct_answer);
 
     if (!correct) {
       console.error("Correct answer not found in poll answers.");
@@ -142,7 +142,7 @@ async function scheduledTask(client: Client): Promise<void> {
     const winnerCount = winners.size;
 
     const loserCollections = await Promise.all(
-      poll.answers.filter((a) => a.text !== translatedQuestion.correctAnswer).map((a) => a.fetchVoters())
+      poll.answers.filter((a) => a.text !== translatedQuestion.correct_answer).map((a) => a.fetchVoters())
     );
 
     const losers = loserCollections
@@ -220,7 +220,7 @@ async function translateQuestion(question: Result): Promise<Result | null> {
   const sourceLanguage = "en";
   const format = "text";
 
-  const allStrings = [question.question, question.correctAnswer, ...question.incorrectAnswers];
+  const allStrings = [question.question, question.correct_answer, ...question.incorrect_answers];
 
   const data = new URLSearchParams();
   data.append("target", targetLanguage);
@@ -250,8 +250,8 @@ async function translateQuestion(question: Result): Promise<Result | null> {
     return {
       ...question,
       question: translations[0].translatedText,
-      correctAnswer: translations[1].translatedText,
-      incorrectAnswers: translations.slice(2).map((t) => t.translatedText),
+      correct_answer: translations[1].translatedText,
+      incorrect_answers: translations.slice(2).map((t) => t.translatedText),
     };
   } catch (error) {
     console.error("Translation error:", error);
@@ -263,8 +263,8 @@ function sanitizeQuestion(question: Result): Result {
   return {
     ...question,
     question: he.decode(question.question),
-    correctAnswer: he.decode(question.correctAnswer),
-    incorrectAnswers: question.incorrectAnswers.map((ans) => he.decode(ans)),
+    correct_answer: he.decode(question.correct_answer),
+    incorrect_answers: question.incorrect_answers.map((ans) => he.decode(ans)),
   };
 }
 
