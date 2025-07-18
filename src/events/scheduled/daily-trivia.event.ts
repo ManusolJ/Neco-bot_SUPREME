@@ -21,9 +21,9 @@ const WAIT_TIME_BETWEEN_MESSAGES = 2000;
 const MINIMUM_REWARD = 1;
 const MAXIMUM_REWARD = 4;
 
-export function dailyTrivia(client: Client): void {
+export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
-    cron.schedule("35 03 * * *", async () => scheduledTask(client), {
+    cron.schedule("39 03 * * *", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
