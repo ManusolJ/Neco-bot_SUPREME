@@ -1,6 +1,15 @@
 import type { User } from "discord.js";
 
-export default function randomMessageBuilder(option: string, user?: User, level: string = "light"): string {
+/**
+ * Generates contextual random messages with user mentions
+ *
+ * @param option Message category type
+ * @param user Optional target user
+ * @param level Insult severity level (default: 'light')
+ * @returns Formatted message string
+ */
+export default function randomMessageBuilder(option: string, user?: User, level?: string): string {
+  // Create user mention if available
   const displayName = user ? `<@${user.id}>` : "Criatura";
 
   switch (option) {
@@ -21,22 +30,40 @@ export default function randomMessageBuilder(option: string, user?: User, level:
     case "monsterFail":
       return buildMessage(monsterFailMessages, displayName);
     case "insult": {
+      // Get messages for specified insult level
       const messages = insultmessages[level as keyof typeof insultmessages] ?? insultmessages.light;
       return randomizeMessage(messages);
     }
     default:
-      return "";
+      return ""; // Return empty for unknown options
   }
 }
 
+/**
+ * Builds message with user mention replacement
+ *
+ * @param messages Message pool array
+ * @param name User mention to insert
+ */
 function buildMessage(messages: string[], name: string): string {
   return replaceName(randomizeMessage(messages), name);
 }
 
+/**
+ * Selects random message from pool
+ *
+ * @param messages Message pool array
+ */
 function randomizeMessage(messages: string[]): string {
   return messages[Math.floor(Math.random() * messages.length)] ?? "";
 }
 
+/**
+ * Replaces placeholder with user mention
+ *
+ * @param message Template message with 'user' placeholder
+ * @param name User mention to insert
+ */
 function replaceName(message: string, name: string): string {
   return message.replace(/user/g, name);
 }
