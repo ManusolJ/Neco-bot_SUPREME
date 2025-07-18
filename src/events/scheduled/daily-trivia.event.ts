@@ -21,9 +21,14 @@ const WAIT_TIME_BETWEEN_MESSAGES = 2000;
 const MINIMUM_REWARD = 1;
 const MAXIMUM_REWARD = 4;
 
+//!FIXME: The translation of boolean answers is not working properly, it returns "True" and "False" instead of "Verdadero" and "Falso".
+//!FIXME: The type and difficulty of the question are not being translated, they are always in English and typed in a code-like manner.
+//TODO: Add more time between messages -> about 3 seconds more.
+//TODO: Improve messages variety of neco-arc for losing and winning.
+
 export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
-    cron.schedule("05 04 * * *", async () => scheduledTask(client), {
+    cron.schedule("30 17 * * *", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
