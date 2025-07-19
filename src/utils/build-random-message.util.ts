@@ -5,7 +5,7 @@ import type { User } from "discord.js";
  *
  * @param option Message category type
  * @param user Optional target user
- * @param level Insult severity level (default: 'light')
+ * @param level Insult severity level
  * @returns Formatted message string
  */
 export default function randomMessageBuilder(option: string, user?: User, level?: string): string {
@@ -44,6 +44,8 @@ export default function randomMessageBuilder(option: string, user?: User, level?
  *
  * @param messages Message pool array
  * @param name User mention to insert
+ *
+ * @returns Formatted message with user mention
  */
 function buildMessage(messages: string[], name: string): string {
   return replaceName(randomizeMessage(messages), name);
@@ -53,6 +55,8 @@ function buildMessage(messages: string[], name: string): string {
  * Selects random message from pool
  *
  * @param messages Message pool array
+ *
+ * @return Randomly selected message or empty string if pool is empty
  */
 function randomizeMessage(messages: string[]): string {
   return messages[Math.floor(Math.random() * messages.length)] ?? "";
@@ -63,6 +67,8 @@ function randomizeMessage(messages: string[]): string {
  *
  * @param message Template message with 'user' placeholder
  * @param name User mention to insert
+ *
+ * @return Formatted message with user mention
  */
 function replaceName(message: string, name: string): string {
   return message.replace(/user/g, name);

@@ -65,7 +65,7 @@ try {
   for (const [envKey, guildId] of Object.entries(guildEnv)) {
     try {
       console.log(yellow(`Registering commands in guild ${envKey} (${guildId})…`));
-      // Update guild-specific commands
+      // Update bot commands
       await rest.put(Routes.applicationGuildCommands(CLIENT_ID, guildId), { body: commands });
       console.log(green(`✓ Success for ${guildId}`));
     } catch (err) {

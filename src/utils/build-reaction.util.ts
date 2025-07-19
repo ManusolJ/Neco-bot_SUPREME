@@ -4,12 +4,15 @@ import { Message } from "discord.js";
  * Adds a random custom emoji reaction to a guild message
  *
  * @param message Discord message to react to
+ *
+ * @throws Error if command is not run in a guild or no custom emojis are available
+ *
+ * @returns {Promise<void>} Resolves when reaction is added
  */
 export default async function reactionBuilder(message: Message): Promise<void> {
   // Only process guild messages
   if (!message.guild) {
-    console.error("Command not run in a guild.");
-    return;
+    throw new Error("Command not run in a guild.");
   }
 
   const guild = message.guild;
@@ -18,8 +21,7 @@ export default async function reactionBuilder(message: Message): Promise<void> {
   const emojis = guild.emojis.cache.map((emoji) => emoji.toString());
 
   if (emojis.length === 0) {
-    console.error("No custom emojis found in the guild.");
-    return;
+    throw new Error("No custom emojis available in this guild.");
   }
 
   // Select random emoji from available options
