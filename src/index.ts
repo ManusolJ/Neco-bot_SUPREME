@@ -1,23 +1,38 @@
+/**
+ * Entry point for the Discord bot. Initializes the client,
+ * loads event handlers, and authenticates with Discord.
+ */
+
 import { Client, GatewayIntentBits } from "discord.js";
 import "dotenv/config";
 
 import loadAllEvents from "@utils/event-loader.util";
 
-// Initialize Discord client with required intents
+/**
+ * Instantiate the Discord client with the necessary gateway intents.
+ */
 const client = new Client({
   intents: [
-    GatewayIntentBits.Guilds, // Server information
-    GatewayIntentBits.GuildMessages, // Server messages
-    GatewayIntentBits.MessageContent, // Message content
-    GatewayIntentBits.GuildVoiceStates, // Voice channel interactions
-    GatewayIntentBits.GuildMembers, // Server member information
+    GatewayIntentBits.Guilds, // Server metadata
+    GatewayIntentBits.GuildMessages, // Reading messages in guilds
+    GatewayIntentBits.MessageContent, // Access to message text content
+    GatewayIntentBits.GuildVoiceStates, // Voice channel events
+    GatewayIntentBits.GuildMembers, // Guild member join/leave/presence
     GatewayIntentBits.GuildPresences, // User presence/status updates
-    GatewayIntentBits.DirectMessages, // Private messages
+    GatewayIntentBits.DirectMessages, // Private message events
   ],
 });
 
-// Load event handlers from filesystem
-await loadAllEvents(client);
+async () => {
+  try {
+    // Dynamically load all event handlers from the filesystem
+    await loadAllEvents(client);
 
-// Authenticate with Discord using token from .env
-await client.login(process.env.BOT_TOKEN);
+    // Log in to Discord using the bot token from environment variables
+    await client.login(process.env.BOT_TOKEN);
+    console.log("Discord client authenticated successfully.");
+  } catch (error) {
+    console.error("Failed to start Discord client:", error);
+    process.exit(1);
+  }
+};

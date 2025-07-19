@@ -1,29 +1,29 @@
-// In-memory lock store for user operations
+// In-memory map to track user locks
 const userLocks = new Map<string, boolean>();
 
 /**
- * Checks if a user is currently locked
+ * Determines whether a user is currently locked.
  *
- * @param id User's Discord ID
- * @returns Lock status
+ * @param id - The Discord user ID to check.
+ * @returns `true` if the user is locked; otherwise `false`.
  */
 export function isUserLocked(id: string): boolean {
   return userLocks.get(id) === true;
 }
 
 /**
- * Locks a user to prevent concurrent operations
+ * Locks a user to prevent concurrent operations.
  *
- * @param id User's Discord ID
+ * @param id - The Discord user ID to lock.
  */
 export function lockUser(id: string): void {
   userLocks.set(id, true);
 }
 
 /**
- * Releases lock for a user
+ * Releases the lock for a user, allowing further operations.
  *
- * @param id User's Discord ID
+ * @param id - The Discord user ID to unlock.
  */
 export function unlockUser(id: string): void {
   userLocks.delete(id);
