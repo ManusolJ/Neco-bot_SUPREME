@@ -20,70 +20,70 @@ const MESSAGE_CASE = "altar";
  * @param client Discord.js Client instance
  */
 export default function altarEvent(client: Client): void {
-  client.on(Events.MessageCreate, async (message) => handleAltarEvent(message));
+  client.on(Events.MessageCreate, async (message) => eventHandler(message));
 }
 
 /**
  * Processes messages in altar channel
  * Rewards users for media posts with random points
  */
-async function handleAltarEvent(message: OmitPartialGroupDMChannel<Message<boolean>>) {
+async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>): Promise<void> {
   // Only process messages in designated channel
   if (message && message.channelId !== NECO_ALTAR_CHANNEL_ID) return;
 
-  const necoService = await NecoService.getInstance();
-  const author = message.author;
-  const guild = message.guild;
+  try {
+    const necoService = await NecoService.getInstance();
+    const author = message.author;
+    const guild = message.guild;
 
-  // Validate message source
-  if (!guild || !author) {
-    console.error("Invalid message source");
-    return;
+    // Validate message source
+    if (!guild || !author) {
+      throw new Error("Invalid message source: guild or author is missing");
+    }
+
+    // Ignore bot messages
+    if (author.bot) return;
+
+    // Check for valid content (embeds, attachments, or Twitter links)
+    const hasMedia = message.embeds.length > 0 || message.attachments.size > 0;
+    const hasTwitterLink = /https?:\/\/(x|twitter|vxtwitter)\.com\/\S+/i.test(message.content);
+    const isPost = hasMedia || hasTwitterLink;
+
+    if (!isPost) return;
+
+    // Validate text channel
+    const channel = guild.channels.cache.get(message.channel.id);
+    if (!channel || !channel.isTextBased()) {
+      throw new Error("Invalid channel: must be a text-based channel");
+    }
+
+    const msgService = new MessageService(channel);
+
+    // Ensure user exists in database
+    const agentExists = await necoService.checkAgentExists(author.id);
+    if (!agentExists) {
+      await necoService.createAgent(author.id);
+    }
+
+    const agent = await necoService.getAgent(author.id);
+    if (!agent) {
+      throw new Error(`Agent not found for user ${author.id}`);
+    }
+
+    // Calculate and apply reward
+    const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
+    const newBalance = agent.balance + reward;
+    await necoService.manipulateAgentBalance(author.id, newBalance);
+
+    // Generate and send response
+    const msg = randomMessageBuilder(MESSAGE_CASE, author);
+    if (!msg) {
+      throw new Error("Failed to generate random message for altar event");
+    }
+
+    await msgService.send(msg);
+    await reactionBuilder(message);
+  } catch (error) {
+    console.error("Error processing altar event:", error);
   }
-
-  // Ignore bot messages
-  if (author.bot) return;
-
-  // Check for valid content (embeds, attachments, or Twitter links)
-  const hasMedia = message.embeds.length > 0 || message.attachments.size > 0;
-  const hasTwitterLink = /https?:\/\/(x|twitter|vxtwitter)\.com\/\S+/i.test(message.content);
-  const isPost = hasMedia || hasTwitterLink;
-
-  if (!isPost) return;
-
-  // Validate text channel
-  const channel = guild.channels.cache.get(message.channel.id);
-  if (!channel || !channel.isTextBased()) {
-    console.error("Invalid channel type");
-    return;
-  }
-
-  const msgService = new MessageService(channel);
-
-  // Ensure user exists in database
-  const agentExists = await necoService.checkAgentExists(author.id);
-  if (!agentExists) {
-    await necoService.createAgent(author.id);
-  }
-
-  const agent = await necoService.getAgent(author.id);
-  if (!agent) {
-    console.error("Agent retrieval failed");
-    return;
-  }
-
-  // Calculate and apply reward
-  const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
-  const newBalance = agent.balance + reward;
-  await necoService.manipulateAgentBalance(author.id, newBalance);
-
-  // Generate and send response
-  const msg = randomMessageBuilder(MESSAGE_CASE, author);
-  if (!msg) {
-    console.error("Message generation failed");
-    return;
-  }
-
-  await msgService.send(msg);
-  await reactionBuilder(message);
 }

@@ -22,7 +22,7 @@ const PUNISHMENT_TIME = 1000 * 60 * 60; // 1 hour in milliseconds
  * @param client Discord.js Client instance
  */
 export default function chairEvent(client: Client): void {
-  client.on(Events.VoiceStateUpdate, async (oldState, newState) => chairEventHandler(client, oldState, newState));
+  client.on(Events.VoiceStateUpdate, async (oldState, newState) => eventHandler(client, oldState, newState));
 }
 
 /**
@@ -31,96 +31,93 @@ export default function chairEvent(client: Client): void {
  * - Applies punishment role when leaving chair
  * - Removes punishment after timeout
  */
-async function chairEventHandler(client: Client, oldState: VoiceState, newState: VoiceState): Promise<void> {
-  // Validate environment variables
-  if (!NECO_MESSAGES_CHANNEL_ID || !MAIN_VOICE_CHANNEL_ID || !FUNNY_CHAIR_CHANNEL_ID || !FUNNY_ROLE_ID || !GUILD_ID) {
-    console.error("Missing required environment variables for chair event");
-    return;
-  }
+async function eventHandler(client: Client, oldState: VoiceState, newState: VoiceState): Promise<void> {
+  try {
+    // Validate environment variables
+    if (!NECO_MESSAGES_CHANNEL_ID || !MAIN_VOICE_CHANNEL_ID || !FUNNY_CHAIR_CHANNEL_ID || !FUNNY_ROLE_ID || !GUILD_ID) {
+      throw new Error("Missing required environment variables for chair event");
+    }
 
-  const necoService = await NecoService.getInstance();
+    const necoService = await NecoService.getInstance();
 
-  // Resolve guild from either state or client cache
-  const guild = oldState.guild ?? newState.guild ?? client.guilds.cache.get(GUILD_ID);
-  if (!guild) {
-    console.error("Failed to resolve guild");
-    return;
-  }
+    // Resolve guild from either state or client cache
+    const guild = oldState.guild ?? newState.guild ?? client.guilds.cache.get(GUILD_ID);
+    if (!guild) {
+      throw new Error("Failed to resolve guild from voice state");
+    }
 
-  // Retrieve channel references
-  const mainChannel = guild.channels.cache.get(MAIN_VOICE_CHANNEL_ID);
-  const chairChannel = guild.channels.cache.get(FUNNY_CHAIR_CHANNEL_ID);
-  const messageChannel = guild.channels.cache.get(NECO_MESSAGES_CHANNEL_ID);
+    // Retrieve channel references
+    const mainChannel = guild.channels.cache.get(MAIN_VOICE_CHANNEL_ID);
+    const chairChannel = guild.channels.cache.get(FUNNY_CHAIR_CHANNEL_ID);
+    const messageChannel = guild.channels.cache.get(NECO_MESSAGES_CHANNEL_ID);
 
-  if (!mainChannel || !chairChannel || !messageChannel) {
-    console.error("Failed to resolve one or more channels");
-    return;
-  }
+    if (!mainChannel || !chairChannel || !messageChannel) {
+      throw new Error("Failed to resolve one or more required channels");
+    }
 
-  // Validate channel types
-  const isMainChannel = mainChannel.isVoiceBased();
-  const isChairChannel = chairChannel.isVoiceBased();
-  const isMessageChannel = messageChannel.isTextBased();
+    // Validate channel types
+    const isMainChannel = mainChannel.isVoiceBased();
+    const isChairChannel = chairChannel.isVoiceBased();
+    const isMessageChannel = messageChannel.isTextBased();
 
-  if (!isMainChannel || !isChairChannel || !isMessageChannel) {
-    console.error("Invalid channel configuration");
-    return;
-  }
+    if (!isMainChannel || !isChairChannel || !isMessageChannel) {
+      throw new Error("Invalid channel types: expected voice channels for main and chair, text channel for messages");
+    }
 
-  const messageService = new MessageService(messageChannel);
-  const funnyRole = guild.roles.cache.get(FUNNY_ROLE_ID);
+    const messageService = new MessageService(messageChannel);
+    const funnyRole = guild.roles.cache.get(FUNNY_ROLE_ID);
 
-  if (!funnyRole) {
-    console.error("Funny role not found");
-    return;
-  }
+    if (!funnyRole) {
+      throw new Error("Funny role not found in guild");
+    }
 
-  // Determine voice state changes
-  const joinedFunnyChannel = newState.channelId === FUNNY_CHAIR_CHANNEL_ID;
-  const leftFunnyChannel = oldState.channelId === FUNNY_CHAIR_CHANNEL_ID;
+    // Determine voice state changes
+    const joinedFunnyChannel = newState.channelId === FUNNY_CHAIR_CHANNEL_ID;
+    const leftFunnyChannel = oldState.channelId === FUNNY_CHAIR_CHANNEL_ID;
 
-  // Resolve target member (prefer newState, fallback to oldState)
-  const target = newState.member ?? oldState.member;
-  if (!target) {
-    console.error("Failed to resolve member");
-    return;
-  }
+    // Resolve target member (prefer newState, fallback to oldState)
+    const target = newState.member ?? oldState.member;
+    if (!target) {
+      throw new Error("Failed to resolve target member from voice state");
+    }
 
-  // Ensure user exists in database
-  const targetExistsInDb = await necoService.checkAgentExists(target.id);
-  if (!targetExistsInDb) {
-    await necoService.createAgent(target.id);
-  }
+    // Ensure user exists in database
+    const targetExistsInDb = await necoService.checkAgentExists(target.id);
+    if (!targetExistsInDb) {
+      await necoService.createAgent(target.id);
+    }
 
-  const agent = await necoService.getAgent(target.id);
-  if (!agent) {
-    console.error("Failed to retrieve agent");
-    return;
-  }
+    const agent = await necoService.getAgent(target.id);
+    if (!agent) {
+      throw new Error(`Agent not found for user ${target.id}`);
+    }
 
-  // Handle chair interactions
-  if (joinedFunnyChannel && !target.roles.cache.has(funnyRole.id)) {
-    // User sat in chair without punishment role
-    const msg = `Ohoo~ Parece que ${target.displayName} se ha sentado en la silla cuck! Nyanyanyaaa~~`;
-    await messageService.send(msg);
-  }
-
-  if (leftFunnyChannel && !target.roles.cache.has(funnyRole.id) && !agent.punished) {
-    // User left chair - apply punishment
-    await target.roles.add(funnyRole);
-    await necoService.manipulateAgentPunishmentState(target.id, PUNISHED);
-    const msg = `Oh no~~ ${target.displayName} ha abandonado la silla cuck... ¡qué decepción!`;
-    await messageService.send(msg);
-  }
-
-  // Schedule punishment removal
-  setTimeout(async () => {
-    const refreshedTarget = guild.members.cache.get(target.id);
-    if (refreshedTarget?.roles.cache.has(funnyRole.id)) {
-      await refreshedTarget.roles.remove(funnyRole.id);
-      await necoService.manipulateAgentPunishmentState(target.id, !PUNISHED);
-      const msg = `${refreshedTarget.displayName} ha sido liberado de la marca del cuck! Oops... Lo he dicho en voz alta? (¬‿¬) Nyehehe~~`;
+    // Handle chair interactions
+    if (joinedFunnyChannel && !target.roles.cache.has(funnyRole.id)) {
+      // User sat in chair without punishment role
+      const msg = `Ohoo~ Parece que ${target.displayName} se ha sentado en la silla cuck! Nyanyanyaaa~~`;
       await messageService.send(msg);
     }
-  }, PUNISHMENT_TIME);
+
+    if (leftFunnyChannel && !target.roles.cache.has(funnyRole.id) && !agent.punished) {
+      // User left chair - apply punishment
+      await target.roles.add(funnyRole);
+      await necoService.manipulateAgentPunishmentState(target.id, PUNISHED);
+      const msg = `Oh no~~ ${target.displayName} ha abandonado la silla cuck... ¡qué decepción!`;
+      await messageService.send(msg);
+    }
+
+    // Schedule punishment removal
+    setTimeout(async () => {
+      const refreshedTarget = guild.members.cache.get(target.id);
+      if (refreshedTarget && refreshedTarget.roles.cache.has(funnyRole.id)) {
+        await refreshedTarget.roles.remove(funnyRole.id);
+        await necoService.manipulateAgentPunishmentState(target.id, !PUNISHED);
+        const msg = `${refreshedTarget.displayName} ha sido liberado de la marca del cuck! Oops... Lo he dicho en voz alta? (¬‿¬) Nyehehe~~`;
+        await messageService.send(msg);
+      }
+    }, PUNISHMENT_TIME);
+  } catch (error) {
+    console.error("Error processing chair event: ", error);
+  }
 }
