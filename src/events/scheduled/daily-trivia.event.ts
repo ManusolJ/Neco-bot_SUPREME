@@ -34,7 +34,7 @@ const MAXIMUM_REWARD = 4;
 export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
     // Schedule daily at 5:30 PM Madrid time
-    cron.schedule("30 17 * * *", async () => scheduledTask(client), {
+    cron.schedule("00 20 * * *", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
@@ -157,9 +157,6 @@ async function scheduledTask(client: Client): Promise<void> {
     const buffer = 500; // 500ms buffer
 
     setTimeout(async () => {
-      // Close the poll
-      await poll.end();
-
       const endMsg = `La trivia ha terminado! Veamos los resultados...`;
       await messageService.send(endMsg);
       await delay(WAIT_TIME_BETWEEN_MESSAGES);
