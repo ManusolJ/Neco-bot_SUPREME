@@ -23,16 +23,14 @@ const client = new Client({
   ],
 });
 
-async () => {
-  try {
-    // Dynamically load all event handlers from the filesystem
-    await loadAllEvents(client);
+try {
+  // Dynamically load all event handlers from the filesystem
+  await loadAllEvents(client);
 
-    // Log in to Discord using the bot token from environment variables
-    await client.login(process.env.BOT_TOKEN);
-    console.log("Discord client authenticated successfully.");
-  } catch (error) {
-    console.error("Failed to start Discord client:", error);
-    process.exit(1);
-  }
-};
+  // Log in to Discord using the bot token from environment variables
+  await client.login(process.env.BOT_TOKEN);
+  console.log("Discord client authenticated successfully.");
+} catch (error) {
+  console.error("Failed to start Discord client:", error);
+  process.exit(1);
+}
