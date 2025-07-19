@@ -7,74 +7,81 @@ import {
   InteractionResponse,
   MessagePayload,
 } from "discord.js";
-
 import path from "path";
 import fs from "fs";
 
-// Shared error image path (matches message.service)
+// Default path to the error image used in interaction replies
 const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 /**
- * Service for handling command interaction responses
- * Centralizes response patterns with consistent error handling
+ * Service centralizing Discord slash‑command interaction responses.
+ *
+ * Offers methods for standard, ephemeral, file, embed, error, deferred,
+ * follow‑up, edit, and delete operations with unified error handling.
  */
 export default class InteractionService {
+  /** The interaction context for reply operations */
   private interaction: ChatInputCommandInteraction;
 
+  /**
+   * Constructs a new InteractionService for a given command interaction.
+   *
+   * @param interaction - The ChatInputCommandInteraction to respond to.
+   */
   constructor(interaction: ChatInputCommandInteraction) {
     this.interaction = interaction;
   }
 
   /**
-   * Standard text-only reply
+   * Sends a standard public reply with plain text.
    *
-   * @param content Response text
+   * @param content - The reply text.
+   * @returns The interaction response.
    */
   async standardReply(content: string) {
     return this.handleResponse({ content });
   }
 
   /**
-   * Ephemeral reply (visible only to user) with optional files
+   * Sends an ephemeral (user‑only) reply, optionally with file attachments.
    *
-   * @param content Response text
-   * @param files Optional array of file paths
+   * @param content - The reply text.
+   * @param files - Optional array of file paths to attach.
+   * @returns The interaction response.
    */
   async feedbackReply(content: string, files: string[] | null = null) {
-    if (files) {
-      const images = files.map((file) => new AttachmentBuilder(file));
-      return this.handleResponse({
-        content,
-        files: images,
-        flags: "Ephemeral",
-      });
-    }
-
-    return this.handleResponse({
+    const options: InteractionReplyOptions = {
       content,
       flags: "Ephemeral",
-    });
+    };
+
+    if (files) {
+      options.files = files.map((file) => new AttachmentBuilder(file));
+    }
+
+    return this.handleResponse(options);
   }
 
   /**
-   * File attachment reply (visible to all)
+   * Sends a public reply with file attachments.
    *
-   * @param content Response text
-   * @param files Array of file paths
+   * @param content - The reply text.
+   * @param files - Array of file paths to attach.
+   * @returns The interaction response.
    */
   async filesReply(content: string, files: string[]) {
-    const images = files.map((file) => new AttachmentBuilder(file));
-
-    return this.handleResponse({
+    const options: InteractionReplyOptions = {
       content,
-      files: images,
-    });
+      files: files.map((file) => new AttachmentBuilder(file)),
+    };
+    return this.handleResponse(options);
   }
 
   /**
-   * Error reply with default image (ephemeral)
+   * Sends an ephemeral error reply with the default error image.
    *
-   * @param content Error message text
+   * @param content - The error message text.
+   * @returns The interaction response.
    */
   async errorReply(content: string) {
     const errorImage = this.loadErrorImage();
@@ -86,24 +93,28 @@ export default class InteractionService {
   }
 
   /**
-   * Embedded content reply
+   * Sends an embed as the interaction reply.
    *
-   * @param embed Prebuilt EmbedBuilder instance
+   * @param embed - A prebuilt EmbedBuilder instance.
+   * @returns The interaction response.
    */
   async embedReply(embed: EmbedBuilder) {
-    return this.handleResponse({
-      embeds: [embed],
-    });
+    return this.handleResponse({ embeds: [embed] });
   }
 
   /**
-   * Defers reply (shows loading state)
+   * Defers the reply, showing a loading state.
    *
-   * @param ephemeral Make deferred response ephemeral
+   * @param ephemeral - Whether the eventual reply should be ephemeral.
+   * @throws Will propagate any error encountered during defer.
    */
   async deferReply(ephemeral = false) {
     try {
-      ephemeral ? this.interaction.deferReply({ flags: "Ephemeral" }) : this.interaction.deferReply();
+      if (ephemeral) {
+        await this.interaction.deferReply({ flags: "Ephemeral" });
+      } else {
+        await this.interaction.deferReply();
+      }
     } catch (error) {
       console.error("Defer reply failed:", error);
       throw error;
@@ -111,16 +122,17 @@ export default class InteractionService {
   }
 
   /**
-   * Deletes existing reply
+   * Deletes the existing reply, if one has been sent.
    *
-   * @throws If no reply exists
+   * @returns Void promise once deletion completes.
+   * @throws If no reply exists or deletion fails.
    */
   async deleteReply() {
     if (!this.interaction.replied) {
       throw new Error("No reply to delete");
     }
     try {
-      return await this.interaction.deleteReply();
+      await this.interaction.deleteReply();
     } catch (error) {
       console.error("Delete reply failed:", error);
       throw error;
@@ -128,15 +140,14 @@ export default class InteractionService {
   }
 
   /**
-   * Follow-up message after initial reply
+   * Sends a follow‑up message after the initial reply.
    *
-   * @param content Follow-up content
-   * @returns Follow-up message
+   * @param content - The follow‑up content (text, payload, or options).
+   * @returns The follow‑up message object.
    */
   async followReply(content: string | MessagePayload | InteractionReplyOptions) {
     try {
-      const result = await this.interaction.followUp(content);
-      return result;
+      return await this.interaction.followUp(content);
     } catch (error) {
       console.error("Follow up failed:", error);
       throw error;
@@ -144,15 +155,14 @@ export default class InteractionService {
   }
 
   /**
-   * Edits existing reply
+   * Edits the existing reply with new content.
    *
-   * @param content New content
-   * @returns Edited message
+   * @param content - The new content (text, payload, or edit options).
+   * @returns The edited message object.
    */
   async editReply(content: string | MessagePayload | InteractionEditReplyOptions) {
     try {
-      const result = await this.interaction.editReply(content);
-      return result;
+      return await this.interaction.editReply(content);
     } catch (error) {
       console.error("Edit reply failed:", error);
       throw error;
@@ -160,15 +170,14 @@ export default class InteractionService {
   }
 
   /**
-   * Unified response handler with error trapping
+   * Internal helper that performs the actual reply operation and traps errors.
    *
-   * @param options Response options
-   * @returns Interaction response
+   * @param options - InteractionReplyOptions to pass to `reply()`.
+   * @returns The raw InteractionResponse or void.
    */
   private async handleResponse(options: InteractionReplyOptions): Promise<void | InteractionResponse> {
     try {
-      const response = await this.interaction.reply(options);
-      return response;
+      return await this.interaction.reply(options);
     } catch (error) {
       console.error("Reply failed:", error);
       throw error;
@@ -176,9 +185,9 @@ export default class InteractionService {
   }
 
   /**
-   * Loads error image (shared implementation with MessageService)
+   * Loads the default error image from disk for error replies.
    *
-   * @returns AttachmentBuilder or null
+   * @returns An AttachmentBuilder or null if the file is inaccessible.
    */
   private loadErrorImage(): AttachmentBuilder | null {
     try {

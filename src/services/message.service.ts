@@ -8,26 +8,34 @@ import {
 import path from "path";
 import fs from "fs";
 
-// Default error image path (resolved at module load)
+// Default path to the error image used when sending error messages
 const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 /**
- * Service for handling Discord message operations in text channels
- * Encapsulates message sending with various content types and error handling
+ * Service encapsulating message sending operations in a Discord text channel.
+ *
+ * Provides methods to send plain text, embeds, files, and standardized error messages
+ * with built‑in error handling and optional attachments.
  */
 export default class MessageService {
+  /** The Discord text channel where messages will be sent */
   private channel: GuildTextBasedChannel;
 
+  /**
+   * Constructs a new MessageService bound to a specific text channel.
+   *
+   * @param channel - The target GuildTextBasedChannel for outgoing messages.
+   */
   constructor(channel: GuildTextBasedChannel) {
     this.channel = channel;
   }
 
   /**
-   * Base message sending method with error handling
+   * Sends arbitrary content to the configured channel.
    *
-   * @param content Message content (string, options, or payload)
-   * @returns Sent message object
-   * @throws Original error on failure
+   * @param content - The message content, which may be a string, full options, or payload.
+   * @returns The sent message object.
+   * @throws Will re‑throw any error encountered during send.
    */
   async send(content: string | MessageCreateOptions | MessagePayload) {
     try {
@@ -35,15 +43,16 @@ export default class MessageService {
       return sent;
     } catch (error) {
       console.error("Failed to send message:", error);
-      throw error; // Propagate for higher-level handling
+      throw error;
     }
   }
 
   /**
-   * Sends an embedded message
+   * Sends an embed along with optional text content.
    *
-   * @param embed Prebuilt EmbedBuilder instance
-   * @param content Optional text content
+   * @param embed - A preconfigured EmbedBuilder instance.
+   * @param content - Optional accompanying text content.
+   * @returns The sent message object.
    */
   async sendEmbed(embed: EmbedBuilder, content?: string) {
     return this.send({
@@ -53,13 +62,13 @@ export default class MessageService {
   }
 
   /**
-   * Sends message with file attachments
+   * Sends text content and attaches one or more files.
    *
-   * @param content Text content
-   * @param filePaths Array of absolute paths to files
+   * @param content - The message text.
+   * @param filePaths - Array of absolute or relative file paths to attach.
+   * @returns The sent message object.
    */
   async sendFiles(content: string, filePaths: string[]) {
-    // Resolve and create AttachmentBuilder instances
     const files = filePaths.map((file) => new AttachmentBuilder(path.resolve(file)));
     return this.send({
       content,
@@ -68,26 +77,26 @@ export default class MessageService {
   }
 
   /**
-   * Sends error message with default error image
+   * Sends an error notification message, attaching the default error image if available.
    *
-   * @param content Error description text
+   * @param content - Error description text.
+   * @returns The sent message object.
    */
   async sendError(content: string) {
     const errorImage = this.loadErrorImage();
     return this.send({
       content,
-      files: errorImage ? [errorImage] : undefined, // Fallback if image missing
+      files: errorImage ? [errorImage] : undefined,
     });
   }
 
   /**
-   * Loads error image from predefined path
+   * Attempts to load the default error image from disk.
    *
-   * @returns AttachmentBuilder if image exists, otherwise null
+   * @returns An AttachmentBuilder for the error image, or null if unavailable.
    */
   private loadErrorImage(): AttachmentBuilder | null {
     try {
-      // Check existence before attempting to attach
       if (fs.existsSync(DEFAULT_ERROR_IMAGE_PATH)) {
         return new AttachmentBuilder(DEFAULT_ERROR_IMAGE_PATH);
       }
