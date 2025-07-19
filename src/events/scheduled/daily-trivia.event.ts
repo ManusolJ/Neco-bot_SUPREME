@@ -4,9 +4,9 @@ import he from "he";
 
 import NecoService from "@services/neco.service";
 import MessageService from "@services/message.service";
-import { Result, TriviaREST } from "@interfaces/trivia-rest.interface";
-import { TranslationREST } from "@interfaces/translation-rest.interface";
 import chaosBuilder from "@utils/build-chaos.util";
+import { RawResult, TriviaQuestion, TriviaREST } from "@interfaces/trivia-rest.interface";
+import { TranslationREST } from "@interfaces/translation-rest.interface";
 
 // API configuration
 const TRIVIA_URL = process.env.TRIVIA_URL;
@@ -23,12 +23,13 @@ const WAIT_TIME_BETWEEN_MESSAGES = 2000;
 const MINIMUM_REWARD = 1;
 const MAXIMUM_REWARD = 4;
 
-// Known issues and TODOs (commented out for production)
-// ...
-
 /**
  * Daily trivia event handler
  * Posts a translated trivia question and rewards correct answers
+ *
+ * @param client Discord client instance
+ *
+ * @returns {void}
  */
 export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
@@ -45,26 +46,28 @@ export default function dailyTrivia(client: Client): void {
  * - Translates to Spanish
  * - Creates poll
  * - Rewards winners
+ *
+ * @param client Discord client instance
+ *
+ * @returns {Promise<void>}
  */
 async function scheduledTask(client: Client): Promise<void> {
   // Validate environment variables
   if (!TRIVIA_URL || !GUILD_ID || !MESSAGE_CHANNEL_ID || !TRANSLATE_URL || !TRANSLATE_API_KEY) {
-    console.error("Undefined variables in the environment.");
-    return;
+    throw new Error("Missing environment variables.");
   }
 
   const necoService = await NecoService.getInstance();
   const guild = client.guilds.cache.get(GUILD_ID);
 
   if (!guild) {
-    console.error("Error retrieving the guild.");
-    return;
+    throw new Error("Guild retrieval failed");
   }
 
   const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
+
   if (!channel || !channel.isTextBased()) {
-    console.error("Error retrieving the message channel.");
-    return;
+    throw new Error("Invalid message channel or not text-based");
   }
 
   const messageService = new MessageService(channel);
@@ -73,34 +76,43 @@ async function scheduledTask(client: Client): Promise<void> {
   const triviaQuestion: TriviaREST | null = await fetchTriviaQuestion();
 
   if (!triviaQuestion || !triviaQuestion.results || triviaQuestion.results.length === 0) {
-    console.error("Error fetching trivia question.");
-    return;
+    throw new Error("Error fetching trivia qusetion.");
   }
 
-  const question = triviaQuestion.results[0];
-  if (!question || question.question || !question.correct_answer || !question.incorrect_answers) {
-    console.error("Invalid trivia question format.");
-    return;
+  const rawQuestion: RawResult = triviaQuestion.results[0];
+
+  const question: TriviaQuestion = {
+    question: rawQuestion.question,
+    correctAnswer: rawQuestion.correct_answer,
+    incorrectAnswers: rawQuestion.incorrect_answers,
+    type: rawQuestion.type,
+    difficulty: rawQuestion.difficulty,
+    category: rawQuestion.category,
+  };
+
+  if (!question || !question.question || !question.correctAnswer || !question.incorrectAnswers) {
+    throw new Error("Invalid trivia question data.");
   }
 
   // Sanitize HTML entities and translate to Spanish
   const sanitizedQuestion = sanitizeQuestion(question);
+
   if (!sanitizedQuestion) {
-    console.error("Error sanitizing trivia question.");
-    return;
+    throw new Error("Error sanitizing trivia question.");
   }
 
   const translatedQuestion = await translateQuestion(sanitizedQuestion);
+
   if (!translatedQuestion) {
-    console.error("Error translating trivia question.");
-    return;
+    throw new Error("Error translating trivia question.");
   }
 
   // Helper for timed delays
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
   // Announce trivia sequence
-  await messageService.send("NYAHAHAHA!!! Hora de una preguntita...");
+  const startMsg = `NYAHAAAAA! Hoy toca trivia! Vamos a ver que pregunta me invento hoy...`;
+  await messageService.send(startMsg);
   await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
   const questionType = translatedQuestion.type === "multiple" ? "opciones" : "verdadero o falso";
@@ -113,13 +125,13 @@ async function scheduledTask(client: Client): Promise<void> {
 
   const difficultyLevel = difficultyDisplayLevels[translatedQuestion.difficulty] || "desconocido";
 
-  await messageService.send(
-    `Veamos... Hoy voy a hacer un pregunta de trivia tipo...${questionType} y de dificultad ${difficultyLevel}.`
-  );
+  const questionMsg = `Veamos... Hoy voy a hacer un pregunta de trivia tipo...${questionType} y de dificultad ${difficultyLevel}.`;
+  await messageService.send(questionMsg);
+
   await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
   // Create poll with shuffled answers
-  const shuffledAnswers = shuffleAnswers([translatedQuestion.correct_answer, ...translatedQuestion.incorrect_answers]);
+  const shuffledAnswers = shuffleAnswers([translatedQuestion.correctAnswer, ...translatedQuestion.incorrectAnswers]);
 
   const pollMsg = await messageService.send({
     poll: {
@@ -132,9 +144,9 @@ async function scheduledTask(client: Client): Promise<void> {
   });
 
   const poll = pollMsg.poll;
-  if (!poll || poll.expiresTimestamp) {
-    console.error("Poll setup failed");
-    return;
+
+  if (!poll || !poll.expiresTimestamp) {
+    throw new Error("Poll creation failed.");
   }
 
   // Schedule poll closing
@@ -143,14 +155,15 @@ async function scheduledTask(client: Client): Promise<void> {
 
   setTimeout(async () => {
     await poll.end();
-    await messageService.send("Se acabo el tiempo! Veamos quien ha acertado...");
+    const endMsg = `La trivia ha terminado! Veamos los resultados...`;
+    await messageService.send(endMsg);
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
     // Identify correct answer
-    const correct = poll.answers.find((a) => a.text === translatedQuestion.correct_answer);
+    const correct = poll.answers.find((a) => a.text === translatedQuestion.correctAnswer);
     if (!correct) {
-      console.error("Correct answer not found");
-      return await messageService.sendError("NYAHAAAAA! No pude encontrar la respuesta!");
+      await messageService.sendError("NYAHAAAAA! No pude encontrar la respuesta!");
+      throw new Error("Correct answer not found in poll.");
     }
 
     // Process winners and losers
@@ -158,7 +171,7 @@ async function scheduledTask(client: Client): Promise<void> {
     const winnerCount = winners.size;
 
     const loserCollections = await Promise.all(
-      poll.answers.filter((a) => a.text !== translatedQuestion.correct_answer).map((a) => a.fetchVoters())
+      poll.answers.filter((a) => a.text !== translatedQuestion.correctAnswer).map((a) => a.fetchVoters())
     );
 
     const losers = loserCollections.flatMap((c) => Array.from(c.values())).filter((user) => !winners.has(user.id));
@@ -167,11 +180,13 @@ async function scheduledTask(client: Client): Promise<void> {
 
     // Handle different outcome scenarios
     if (winnerCount === 0 && loserCount === 0) {
-      await messageService.send("Nadie ha votado!? Pues que os den! -10000 puntos para todos >:3");
+      // No votes at all
+      const noVotesMsg = "Nadie ha votado??!?!? Que desastre! -10000 puntos para todos >:3";
+      return await messageService.send(noVotesMsg);
     } else if (winnerCount === 0) {
-      await messageService.send(
-        "Ningun usuario ha acertado, lmao. Bastante patetico. En fin, no pasa nada. Lavaos el pilk del cerebro e intendadlo mañana."
-      );
+      // No winners, only losers
+      const noWinnersMsg = `Nadie ha acertado, lmao. Bastante patetico. En fin, no pasa nada. Lavaos el pilk del cerebro e intendadlo mañana.`;
+      return await messageService.send(noWinnersMsg);
     } else {
       // Announce winners and distribute rewards
       const winnerNames = Array.from(winners.values())
@@ -194,7 +209,7 @@ async function scheduledTask(client: Client): Promise<void> {
 
       // Mock losers
       const loserNames = losers.map((u) => u.username).join(", ");
-      await messageService.send(`Los perdedores son: ${loserNames}. No os preocupeis... Por ahora.`);
+      return await messageService.send(`Los perdedores son: ${loserNames}. No os preocupeis... Por ahora.`);
     }
   }, msUntilExpiry + buffer);
 }
@@ -221,7 +236,7 @@ async function fetchTriviaQuestion(): Promise<TriviaREST | null> {
 }
 
 /** Translates question and answers to Spanish */
-async function translateQuestion(question: Result): Promise<Result | null> {
+async function translateQuestion(question: TriviaQuestion): Promise<TriviaQuestion | null> {
   const data = new URLSearchParams();
   data.append("target", "es");
   data.append("source", "en");
@@ -229,7 +244,7 @@ async function translateQuestion(question: Result): Promise<Result | null> {
   data.append("key", TRANSLATE_API_KEY);
 
   // Add all text components to translation request
-  [question.question, question.correct_answer, ...question.incorrect_answers].forEach((str) => data.append("q", str));
+  [question.question, question.correctAnswer, ...question.incorrectAnswers].forEach((str) => data.append("q", str));
 
   try {
     const response = await fetch(TRANSLATE_URL, {
@@ -250,9 +265,9 @@ async function translateQuestion(question: Result): Promise<Result | null> {
 
     return {
       ...question,
-      question: translations[0].translatedText,
-      correct_answer: translations[1].translatedText,
-      incorrect_answers: translations.slice(2).map((t) => t.translatedText),
+      question: translations[0].translatedText.toLowerCase(),
+      correctAnswer: translations[1].translatedText.toLowerCase(),
+      incorrectAnswers: translations.slice(2).map((t) => t.translatedText.toLowerCase()),
     };
   } catch (error) {
     console.error("Translation error:", error);
@@ -261,12 +276,12 @@ async function translateQuestion(question: Result): Promise<Result | null> {
 }
 
 /** Decodes HTML entities in question data */
-function sanitizeQuestion(question: Result): Result {
+function sanitizeQuestion(question: TriviaQuestion): TriviaQuestion {
   return {
     ...question,
     question: he.decode(question.question),
-    correct_answer: he.decode(question.correct_answer),
-    incorrect_answers: question.incorrect_answers.map((ans) => he.decode(ans)),
+    correctAnswer: he.decode(question.correctAnswer),
+    incorrectAnswers: question.incorrectAnswers.map((ans) => he.decode(ans)),
   };
 }
 

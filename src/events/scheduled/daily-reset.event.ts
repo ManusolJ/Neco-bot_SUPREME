@@ -6,9 +6,13 @@ import NecoService from "@services/neco.service";
 /**
  * Scheduled daily reset for begging cooldowns
  * Runs at 12:00 PM daily (Madrid time)
+ *
+ * @param client Discord client instance
+ *
+ * @returns {void}
  */
 export default function dailyBeg(client: Client): void {
-  // Setup cron job when bot is ready
+  // Schedule daily at 12:00 PM Madrid time
   client.once("ready", () => {
     cron.schedule("0 12 * * *", async () => scheduledTask(), {
       timezone: "Europe/Madrid",
@@ -19,6 +23,10 @@ export default function dailyBeg(client: Client): void {
 /**
  * Executes the daily reset task
  * Resets all agents' begged state
+ *
+ * @param client Discord client instance
+ *
+ * @returns {Promise<void>}
  */
 async function scheduledTask(): Promise<void> {
   const necoService = await NecoService.getInstance();
