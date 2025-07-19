@@ -1,13 +1,22 @@
 export interface TriviaREST {
   response_code: number;
-  results: Result[];
+  results: RawResult[];
 }
 
-export interface Result {
+export interface RawResult {
   type: string;
   difficulty: string;
   category: string;
   question: string;
   correct_answer: string;
   incorrect_answers: string[];
+}
+
+export interface TriviaQuestion {
+  type: string;
+  difficulty: string;
+  category: string;
+  question: string;
+  correctAnswer: string;
+  incorrectAnswers: string[];
 }
