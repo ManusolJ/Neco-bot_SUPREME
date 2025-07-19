@@ -5,72 +5,87 @@ import NecoService from "@services/neco.service";
 import MessageService from "@services/message.service";
 import Agent from "@interfaces/agent.interface";
 
-// Discord configuration
+// Environment variable for the target Discord guild ID
 const GUILD_ID = process.env.GUILD_ID;
+// Environment variable for the target channel ID where messages are posted
 const MESSAGE_CHANNEL_ID = process.env.NECO_MESSAGES_CHANNEL;
 
 /**
- * Weekly leaderboard reset event
- * Posts top 5 agents and resets balances every Sunday
+ * Registers a weekly cron job to post the top 5 agents and reset their balances.
+ *
+ * This function sets up a task that runs every Sunday at 15:00 (3 PM)
+ * Europe/Madrid time once the client is ready.
+ *
+ * @param client - The Discord.js Client instance used to access guilds and channels.
  */
 export default function weeklyChoosen(client: Client): void {
   client.once("ready", () => {
-    // Schedule weekly on Sunday at 3:00 PM Madrid time
-    cron.schedule("0 15 * * SUN", async () => scheduledTask(client), {
-      timezone: "Europe/Madrid",
-    });
+    cron.schedule("0 15 * * SUN", async () => scheduledTask(client), { timezone: "Europe/Madrid" });
   });
 }
 
 /**
- * Executes weekly ranking reset
- * - Displays top 5 agents
- * - Resets all balances to zero
+ * Performs the weekly leaderboard posting and balance reset.
+ *
+ * Steps:
+ * 1. Validates required environment variables.
+ * 2. Retrieves the guild and channel instances.
+ * 3. Fetches all agents from the database.
+ * 4. Posts a formatted leaderboard message of the top 5 agents.
+ * 5. Resets all agents' balances to zero.
+ *
+ * @param client - The Discord.js Client instance.
  */
 async function scheduledTask(client: Client): Promise<void> {
-  if (!GUILD_ID || !MESSAGE_CHANNEL_ID) {
-    console.error("Missing environment variables");
-    return;
+  try {
+    if (!GUILD_ID || !MESSAGE_CHANNEL_ID) {
+      throw new Error("Missing environment variables.");
+    }
+
+    const necoService = await NecoService.getInstance();
+    // Fetch and validate guild
+    const guild = client.guilds.cache.get(GUILD_ID);
+    if (!guild) {
+      throw new Error("Guild not found.");
+    }
+
+    const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
+    if (!channel || !channel.isTextBased()) {
+      throw new Error("Channel not found or not text-based.");
+    }
+
+    const messageService = new MessageService(channel);
+
+    // Retrieve all agents; if none exist, report an error and exit
+    const agents: Agent[] = (await necoService.getAllAgents()) ?? [];
+    if (agents.length === 0) {
+      const errorMsg = "NYAHAA!? No encontre ningun agente!";
+      await messageService.sendError(errorMsg);
+      throw new Error("No agents found.");
+    }
+
+    // Post the weekly ranking and then reset balances
+    await messageService.send(getRankingMessage(agents));
+    await necoService.resetGlobalChaos();
+    const resetMessage = "¡Se ha reiniciado el marcador del caos! ¡A sembrar más caos!";
+    await messageService.send(resetMessage);
+    console.log("Weekly chaos reset completed.");
+  } catch (error) {
+    console.error("Error in weeklyChoosen scheduled task:", error);
   }
-
-  const necoService = await NecoService.getInstance();
-  const guild = client.guilds.cache.get(GUILD_ID);
-
-  if (!guild) {
-    console.error("Guild retrieval failed");
-    return;
-  }
-
-  const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
-  if (!channel || !channel.isTextBased()) {
-    console.error("Invalid message channel");
-    return;
-  }
-
-  const messageService = new MessageService(channel);
-
-  // Retrieve all agents
-  const agents: Agent[] = (await necoService.getAllAgents()) ?? [];
-  if (!agents.length) {
-    console.error("No agents found");
-    const errorMsg = "NYAHAA!? No encontre ningun agente!";
-    await messageService.sendError(errorMsg);
-    return;
-  }
-
-  // Display ranking
-  await messageService.send(getRankingMessage(agents));
-
-  // Reset global balances
-  await necoService.resetGlobalChaos();
-  await messageService.send("Se ha reiniciado el marcador del caos. ¡A sembrar mas caos!");
-  console.log("Weekly chaos reset completed");
 }
 
-/** Formats leaderboard message with top 5 agents */
+/**
+ * Constructs a leaderboard message for the top five agents by balance.
+ *
+ * @param agents - Array of all agents with `id` and `balance` properties.
+ * @returns A formatted string listing the top five agents with medal emojis.
+ */
 function getRankingMessage(agents: Agent[]): string {
+  // Sort agents descending by balance and take the top five
   const topFive = [...agents].sort((a, b) => b.balance - a.balance).slice(0, 5);
 
+  // Map each agent to a line with a medal and mention
   const podium = topFive
     .map((agent, index) => {
       const medals = ["🥇", "🥈", "🥉", "🧨", "💥"];

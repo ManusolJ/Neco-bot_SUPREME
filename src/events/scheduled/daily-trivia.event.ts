@@ -52,171 +52,179 @@ export default function dailyTrivia(client: Client): void {
  * @returns {Promise<void>}
  */
 async function scheduledTask(client: Client): Promise<void> {
-  // Validate environment variables
-  if (!TRIVIA_URL || !GUILD_ID || !MESSAGE_CHANNEL_ID || !TRANSLATE_URL || !TRANSLATE_API_KEY) {
-    throw new Error("Missing environment variables.");
-  }
+  try {
+    // Validate environment variables
+    if (!TRIVIA_URL || !GUILD_ID || !MESSAGE_CHANNEL_ID || !TRANSLATE_URL || !TRANSLATE_API_KEY) {
+      throw new Error("Missing environment variables.");
+    }
 
-  const necoService = await NecoService.getInstance();
-  const guild = client.guilds.cache.get(GUILD_ID);
+    const necoService = await NecoService.getInstance();
 
-  if (!guild) {
-    throw new Error("Guild retrieval failed");
-  }
+    // Validate and fetch guild
+    const guild = client.guilds.cache.get(GUILD_ID);
+    if (!guild) {
+      throw new Error("Guild retrieval failed");
+    }
 
-  const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
+    // Validate and fetch channel
+    const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
+    if (!channel || !channel.isTextBased()) {
+      throw new Error("Invalid message channel or not text-based");
+    }
 
-  if (!channel || !channel.isTextBased()) {
-    throw new Error("Invalid message channel or not text-based");
-  }
+    const messageService = new MessageService(channel);
 
-  const messageService = new MessageService(channel);
+    // Fetch and validate trivia question
+    const triviaQuestion: TriviaREST | null = await fetchTriviaQuestion();
+    if (!triviaQuestion || !triviaQuestion.results || triviaQuestion.results.length === 0) {
+      throw new Error("Error fetching trivia qusetion.");
+    }
 
-  // Fetch and validate trivia question
-  const triviaQuestion: TriviaREST | null = await fetchTriviaQuestion();
+    const rawQuestion: RawResult = triviaQuestion.results[0];
 
-  if (!triviaQuestion || !triviaQuestion.results || triviaQuestion.results.length === 0) {
-    throw new Error("Error fetching trivia qusetion.");
-  }
+    // Convert raw question to structured format
+    const question: TriviaQuestion = {
+      question: rawQuestion.question,
+      correctAnswer: rawQuestion.correct_answer,
+      incorrectAnswers: rawQuestion.incorrect_answers,
+      type: rawQuestion.type,
+      difficulty: rawQuestion.difficulty,
+      category: rawQuestion.category,
+    };
 
-  const rawQuestion: RawResult = triviaQuestion.results[0];
+    if (!question || !question.question || !question.correctAnswer || !question.incorrectAnswers) {
+      throw new Error("Invalid trivia question data.");
+    }
 
-  const question: TriviaQuestion = {
-    question: rawQuestion.question,
-    correctAnswer: rawQuestion.correct_answer,
-    incorrectAnswers: rawQuestion.incorrect_answers,
-    type: rawQuestion.type,
-    difficulty: rawQuestion.difficulty,
-    category: rawQuestion.category,
-  };
+    // Sanitize HTML entities and translate to Spanish
+    const sanitizedQuestion = sanitizeQuestion(question);
 
-  if (!question || !question.question || !question.correctAnswer || !question.incorrectAnswers) {
-    throw new Error("Invalid trivia question data.");
-  }
+    if (!sanitizedQuestion) {
+      throw new Error("Error sanitizing trivia question.");
+    }
 
-  // Sanitize HTML entities and translate to Spanish
-  const sanitizedQuestion = sanitizeQuestion(question);
+    // Translate question and answers
+    const translatedQuestion = await translateQuestion(sanitizedQuestion);
 
-  if (!sanitizedQuestion) {
-    throw new Error("Error sanitizing trivia question.");
-  }
+    if (!translatedQuestion) {
+      throw new Error("Error translating trivia question.");
+    }
 
-  const translatedQuestion = await translateQuestion(sanitizedQuestion);
+    // Helper for timed delays
+    const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  if (!translatedQuestion) {
-    throw new Error("Error translating trivia question.");
-  }
-
-  // Helper for timed delays
-  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-  // Announce trivia sequence
-  const startMsg = `NYAHAAAAA! Hoy toca trivia! Vamos a ver que pregunta me invento hoy...`;
-  await messageService.send(startMsg);
-  await delay(WAIT_TIME_BETWEEN_MESSAGES);
-
-  const questionType = translatedQuestion.type === "multiple" ? "opciones" : "verdadero o falso";
-
-  const difficultyDisplayLevels: Record<string, string> = {
-    easy: "facil",
-    medium: "medio",
-    hard: "dificil",
-  };
-
-  const difficultyLevel = difficultyDisplayLevels[translatedQuestion.difficulty] || "desconocido";
-
-  const questionMsg = `Veamos... Hoy voy a hacer un pregunta de trivia tipo...${questionType} y de dificultad ${difficultyLevel}.`;
-  await messageService.send(questionMsg);
-
-  await delay(WAIT_TIME_BETWEEN_MESSAGES);
-
-  // Create poll with shuffled answers
-  const shuffledAnswers = shuffleAnswers([translatedQuestion.correctAnswer, ...translatedQuestion.incorrectAnswers]);
-
-  const pollMsg = await messageService.send({
-    poll: {
-      question: { text: translatedQuestion.question },
-      answers: shuffledAnswers.map((item) => ({ text: item, emoji: "" })),
-      allowMultiselect: false,
-      duration: 1, // 1 hour duration
-      layoutType: PollLayoutType.Default,
-    },
-  });
-
-  const poll = pollMsg.poll;
-
-  if (!poll || !poll.expiresTimestamp) {
-    throw new Error("Poll creation failed.");
-  }
-
-  // Schedule poll closing
-  const msUntilExpiry = poll.expiresTimestamp - Date.now();
-  const buffer = 500; // 500ms buffer
-
-  setTimeout(async () => {
-    await poll.end();
-    const endMsg = `La trivia ha terminado! Veamos los resultados...`;
-    await messageService.send(endMsg);
+    // Announce trivia sequence
+    const startMsg = `NYAHAAAAA! Ahora toca trivia! Vamos a ver que pregunta me invento hoy...`;
+    await messageService.send(startMsg);
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
-    // Identify correct answer
-    const correct = poll.answers.find((a) => a.text === translatedQuestion.correctAnswer);
-    if (!correct) {
-      await messageService.sendError("NYAHAAAAA! No pude encontrar la respuesta!");
-      throw new Error("Correct answer not found in poll.");
+    const questionType = translatedQuestion.type === "multiple" ? "opciones" : "verdadero o falso";
+
+    const difficultyDisplayLevels: Record<string, string> = {
+      easy: "facil",
+      medium: "medio",
+      hard: "dificil",
+    };
+
+    const difficultyLevel = difficultyDisplayLevels[translatedQuestion.difficulty] || "desconocido";
+
+    // Announce question type and difficulty
+    const questionMsg = `Veamos... Hoy voy a hacer un pregunta de trivia tipo...${questionType} y de dificultad ${difficultyLevel}.`;
+    await messageService.send(questionMsg);
+    await delay(WAIT_TIME_BETWEEN_MESSAGES);
+
+    // Create poll with shuffled answers
+    const shuffledAnswers = shuffleAnswers([translatedQuestion.correctAnswer, ...translatedQuestion.incorrectAnswers]);
+
+    const pollMsg = await messageService.send({
+      poll: {
+        question: { text: translatedQuestion.question },
+        answers: shuffledAnswers.map((item) => ({ text: item, emoji: "" })),
+        allowMultiselect: false,
+        duration: 1, // 1 hour duration
+        layoutType: PollLayoutType.Default,
+      },
+    });
+
+    const poll = pollMsg.poll;
+
+    if (!poll || !poll.expiresTimestamp) {
+      throw new Error("Poll creation failed.");
     }
 
-    // Process winners and losers
-    const winners = await correct.fetchVoters();
-    const winnerCount = winners.size;
+    // Schedule poll closing
+    const msUntilExpiry = poll.expiresTimestamp - Date.now();
+    const buffer = 500; // 500ms buffer
 
-    const loserCollections = await Promise.all(
-      poll.answers.filter((a) => a.text !== translatedQuestion.correctAnswer).map((a) => a.fetchVoters())
-    );
+    setTimeout(async () => {
+      // Close the poll
+      await poll.end();
 
-    const losers = loserCollections.flatMap((c) => Array.from(c.values())).filter((user) => !winners.has(user.id));
+      const endMsg = `La trivia ha terminado! Veamos los resultados...`;
+      await messageService.send(endMsg);
+      await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
-    const loserCount = losers.length;
-
-    // Handle different outcome scenarios
-    if (winnerCount === 0 && loserCount === 0) {
-      // No votes at all
-      const noVotesMsg = "Nadie ha votado??!?!? Que desastre! -10000 puntos para todos >:3";
-      return await messageService.send(noVotesMsg);
-    } else if (winnerCount === 0) {
-      // No winners, only losers
-      const noWinnersMsg = `Nadie ha acertado, lmao. Bastante patetico. En fin, no pasa nada. Lavaos el pilk del cerebro e intendadlo mañana.`;
-      return await messageService.send(noWinnersMsg);
-    } else {
-      // Announce winners and distribute rewards
-      const winnerNames = Array.from(winners.values())
-        .map((u) => u.username)
-        .join(", ");
-      await messageService.send(`Los ganadores son: ${winnerNames}! Felicidades!`);
-
-      for (const [userId, user] of winners) {
-        const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
-        if (await necoService.checkAgentExists(userId)) {
-          const agent = await necoService.getAgent(userId);
-          if (agent) {
-            await necoService.manipulateAgentBalance(userId, agent.balance + reward);
-          }
-        } else {
-          await necoService.createAgent(userId);
-          await necoService.manipulateAgentBalance(userId, reward);
-        }
+      // Identify correct answer
+      const correct = poll.answers.find((a) => a.text === translatedQuestion.correctAnswer);
+      if (!correct) {
+        await messageService.sendError("NYAHAAAAA! No pude encontrar la respuesta!");
+        throw new Error("Correct answer not found in poll.");
       }
 
-      // Mock losers
-      const loserNames = losers.map((u) => u.username).join(", ");
-      return await messageService.send(`Los perdedores son: ${loserNames}. No os preocupeis... Por ahora.`);
-    }
-  }, msUntilExpiry + buffer);
+      // Process winners and losers
+      const winners = await correct.fetchVoters();
+      const winnerCount = winners.size;
+
+      const loserCollections = await Promise.all(
+        poll.answers.filter((a) => a.text !== translatedQuestion.correctAnswer).map((a) => a.fetchVoters())
+      );
+
+      const losers = loserCollections.flatMap((c) => Array.from(c.values())).filter((user) => !winners.has(user.id));
+
+      const loserCount = losers.length;
+
+      // Handle different outcome scenarios
+      if (winnerCount === 0 && loserCount === 0) {
+        // No votes at all
+        const noVotesMsg = "Nadie ha votado??!?!? Que desastre! -10000 puntos para todos >:3";
+        return await messageService.send(noVotesMsg);
+      } else if (winnerCount === 0) {
+        // No winners, only losers
+        const noWinnersMsg = `Nadie ha acertado, lmao. Bastante patetico. En fin, no pasa nada. Lavaos el pilk del cerebro e intendadlo mañana.`;
+        return await messageService.send(noWinnersMsg);
+      } else {
+        // Announce winners and distribute rewards
+        const winnerNames = Array.from(winners.values())
+          .map((u) => u.username)
+          .join(", ");
+        await messageService.send(`Los ganadores son: ${winnerNames}! Felicidades!`);
+
+        for (const [userId, user] of winners) {
+          const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
+          if (await necoService.checkAgentExists(userId)) {
+            const agent = await necoService.getAgent(userId);
+            if (agent) {
+              await necoService.manipulateAgentBalance(userId, agent.balance + reward);
+            }
+          } else {
+            await necoService.createAgent(userId);
+            await necoService.manipulateAgentBalance(userId, reward);
+          }
+        }
+
+        // Mock losers
+        const loserNames = losers.map((u) => u.username).join(", ");
+        return await messageService.send(`Los perdedores son: ${loserNames}. No os preocupeis... Por ahora.`);
+      }
+    }, msUntilExpiry + buffer);
+  } catch (error) {
+    console.error("Error in daily trivia task:", error);
+  }
 }
 
 /** Fetches random trivia question from API */
 async function fetchTriviaQuestion(): Promise<TriviaREST | null> {
-  // Configure random question parameters
+  // Configure question parameters
   const types = ["multiple", "boolean"];
   const difficulties = ["easy", "medium", "hard"];
 
