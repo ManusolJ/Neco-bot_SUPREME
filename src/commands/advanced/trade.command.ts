@@ -129,19 +129,13 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!points || points < 1 || points > 20) {
     const errorMsg = "¡Los puntos deben estar entre 1 y 20!";
-    await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    await interactionService.followReply(errorMsg);
     throw new Error(`Invalid points value in gift command. Points: ${points}`);
   }
 
   if (!author || !user || !reason || !reward) {
-    const errorMsg = "¡Faltan datos necesarios para completar la transacción!";
-    await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    const errorMsg = "¡Me faltan datos necesarios para completar la transacción!";
+    await interactionService.followReply(errorMsg);
     throw new Error(
       `Missing required data in gift command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`
     );
@@ -150,18 +144,12 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   if (author.id === user.id) {
     await punishUser(author, points);
     const errorMsg = "¡No puedes regalarte puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
-    return await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    return await interactionService.followReply(errorMsg);
   }
 
   if (user.bot) {
     const errorMsg = "¡No puedes regalar puntos a un bot! Seras bobo!";
-    return await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    return await interactionService.followReply(errorMsg);
   }
 
   let authorAgent = await necoService.getAgent(author.id);
@@ -172,10 +160,7 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!authorAgent) {
     const errorMsg = "¡No pude obtener tu informacion de agente del caos! Vuelve a intentarlo.";
-    await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    await interactionService.followReply(errorMsg);
     throw new Error(`Author agent could not be retrieved in trade command. Author ID: ${author.id}`);
   }
 
@@ -188,19 +173,13 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!userAgent) {
     const errorMsg = "¡No pude obtener la informacion del usuario! Vuelve a intentarlo.";
-    await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    await interactionService.followReply(errorMsg);
     throw new Error(`User agent could not be retrieved in trade command. User ID: ${user.id}`);
   }
 
   if (authorAgent.balance < points) {
     const errorMsg = "¡No tienes suficientes puntos para regalar! Seras pobre!";
-    return await interactionService.followReply({
-      content: errorMsg,
-      flags: "Ephemeral",
-    });
+    return interactionService.followReply(errorMsg);
   }
 
   const embedDisplay = await getTradeEmbed(author, user, points, reason, reward);
@@ -233,10 +212,7 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   collector.on("collect", async (i) => {
     if (isUserLocked(user.id) || isUserLocked(author.id)) {
       const errorMsg = "Ya esta en proceso! Esperate un momento ansias!";
-      return await interactionService.followReply({
-        content: errorMsg,
-        flags: "Ephemeral",
-      });
+      return await interactionService.followReply(errorMsg);
     }
     lockUser(user.id);
     lockUser(author.id);
@@ -295,10 +271,7 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 //TODO: Implement requestPoints function
 async function requestPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
   const lazyMsg = "¡Esta funcion no esta implementada todavia! Vuelve mas tarde.";
-  return await interactionService.followReply({
-    content: lazyMsg,
-    flags: "Ephemeral",
-  });
+  return await interactionService.followReply(lazyMsg);
 }
 
 async function punishUser(user: User, wantedPoints: number) {
@@ -350,14 +323,14 @@ async function generateMemeImage(points: number, reward: string): Promise<string
   const boxes = [
     {
       text: `${reward}`,
-      x: 71,
+      x: 65,
       y: 320,
       width: 300,
       height: 100,
     },
     {
       text: `${points} puntos`,
-      x: 664,
+      x: 635,
       y: 302,
       width: 300,
       height: 100,
