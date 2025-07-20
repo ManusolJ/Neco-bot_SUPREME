@@ -61,6 +61,7 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     const messageChannel = guild.channels.cache.get(NECO_MESSAGES_CHANNEL_ID);
 
     if (!mainChannel || !chairChannel || !messageChannel) {
+      console.log(mainChannel, chairChannel, messageChannel);
       throw new Error("Failed to resolve one or more required channels");
     }
 
