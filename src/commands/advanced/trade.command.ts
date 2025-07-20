@@ -100,7 +100,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("Trade command executed outside of a guild.");
     }
 
-    await interactionService.deferReply(true);
+    const deferralMsg = "Creando el trade...";
+    await interactionService.feedbackReply(deferralMsg);
 
     const subcommand = interaction.options.getSubcommand();
 
