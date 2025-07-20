@@ -34,7 +34,7 @@ const MAXIMUM_REWARD = 4;
 export default function dailyTrivia(client: Client): void {
   client.once("ready", () => {
     // Schedule daily at 5:30 PM Madrid time
-    cron.schedule("00 20 * * *", async () => scheduledTask(client), {
+    cron.schedule("30 17 * * *", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });

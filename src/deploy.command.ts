@@ -1,44 +1,48 @@
 /**
- * Script to register global and guild‑specific Discord slash commands by
- * dynamically discovering command modules and pushing them via the Discord REST API.
+ * @file
+ * Discovers and registers Discord slash commands—both global and per‑guild—
+ * by dynamically importing each command module and pushing them via the REST API.
  */
 
-import { REST, Routes, type RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js";
-import { readdir } from "fs/promises";
-import { fileURLToPath, pathToFileURL } from "url";
 import path from "path";
 import { env } from "process";
+import { readdir } from "fs/promises";
+import { fileURLToPath, pathToFileURL } from "url";
+import { REST, Routes, type RESTPostAPIChatInputApplicationCommandsJSONBody } from "discord.js";
 
 const CLIENT_ID = env.CLIENT_ID;
+const BOT_TOKEN = env.BOT_TOKEN;
 
-// Validate essential environment variables
+/**
+ * The application client ID
+ *
+ * @constant {string}
+ * @throws Will exit with code 1 if undefined.
+ */
 if (!CLIENT_ID) {
   console.error("Missing CLIENT_ID environment variable");
   process.exit(1);
 }
 
 /**
- * Wraps a message in ANSI green color codes.
+ * The bot’s authentication token, loaded from the BOT_TOKEN environment variable.
+ *
+ * @constant {string}
+ * @throws Will exit the process if BOT_TOKEN is undefined.
+ */
+if (!BOT_TOKEN) {
+  console.error("Missing BOT_TOKEN environment variable");
+  process.exit(1);
+}
+
+/**
+ * ANSI‑color formatter for console success, error and info messages.
  *
  * @param msg - The message to colorize.
- * @returns The green‑colored ANSI string.
+ * @returns A colored string.
  */
 const green = (msg: string): string => `\x1b[32m${msg}\x1b[0m`;
-
-/**
- * Wraps a message in ANSI red color codes.
- *
- * @param msg - The message to colorize.
- * @returns The red‑colored ANSI string.
- */
 const red = (msg: string): string => `\x1b[31m${msg}\x1b[0m`;
-
-/**
- * Wraps a message in ANSI yellow color codes.
- *
- * @param msg - The message to colorize.
- * @returns The yellow‑colored ANSI string.
- */
 const yellow = (msg: string): string => `\x1b[33m${msg}\x1b[0m`;
 
 // Resolve current module path for cross‑platform compatibility
@@ -74,8 +78,12 @@ for (const file of commandFiles) {
   }
 }
 
-// Initialize Discord REST API client
-const rest = new REST().setToken(env.BOT_TOKEN);
+/**
+ * Authenticated Discord.js REST client.
+ *
+ * @constant {REST}
+ */
+const rest = new REST().setToken(BOT_TOKEN);
 
 // Fetch all environment variables that begin with "GUILD_"
 const guildEnv = getEnvByPrefix("GUILD_");
@@ -102,10 +110,10 @@ try {
 }
 
 /**
- * Filters environment variables by a given prefix.
+ * Filters environment variables by prefix.
  *
- * @param prefix - The prefix to match (e.g., "GUILD_").
- * @returns A record of matching key/value pairs.
+ * @param prefix - Prefix to match (e.g., "GUILD_").
+ * @returns A mapping of variable names to their values.
  */
 function getEnvByPrefix(prefix: string): Record<string, string> {
   return Object.entries(process.env)
@@ -117,10 +125,10 @@ function getEnvByPrefix(prefix: string): Record<string, string> {
 }
 
 /**
- * Recursively finds all TypeScript files in a directory.
+ * Recursively retrieves all `.ts` files from a directory.
  *
- * @param dir - The root directory to search.
- * @returns A promise resolving to an array of absolute file paths.
+ * @param dir - Root directory to scan.
+ * @returns Promise resolving to an array of absolute file paths.
  */
 async function getAllCommandFiles(dir: string): Promise<string[]> {
   const entries = await readdir(dir, { withFileTypes: true });

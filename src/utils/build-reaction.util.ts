@@ -1,7 +1,7 @@
 import { Message } from "discord.js";
 
 /**
- * Adds a random custom emoji reaction to a guild message.
+ * @file Adds a random custom emoji reaction to a guild message.
  *
  * @remarks
  * This function will throw if invoked outside of a guild context or if

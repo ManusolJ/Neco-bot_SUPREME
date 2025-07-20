@@ -9,31 +9,37 @@ declare global {
       DB_PASSWORD: string;
       DATABASE: string;
 
-      ADMIN_ROLE: string;
+      MEME_USERNAME: string;
+      MEME_PASSWORD: string;
+
       BOT_ROLE: string;
       HOLE_ROLE: string;
       FUNNY_ROLE: string;
+      ADMIN_ROLE: string;
       CULTIST_ROLE: string;
       HERETIC_ROLE: string;
 
       MAIN_VOICE_CHANNEL: string;
       FUNNY_CHAIR_CHANNEL: string;
 
-      LOBOTOMITE_CHANNEL: string;
       COPYPASTA_CHANNEL: string;
-      NECO_MESSAGES_CHANNEL: string;
       NECO_ALTAR_CHANNEL: string;
+      LOBOTOMITE_CHANNEL: string;
+      NECO_MESSAGES_CHANNEL: string;
 
-      COPYPASTA_URL: string;
-      ROBOFLOW_URL: string;
+      MEME_URL: string;
       TRIVIA_URL: string;
+      ROBOFLOW_URL: string;
+      COPYPASTA_URL: string;
       TRANSLATION_URL: string;
 
+      ROBOFLOW_API_KEY: string;
       TRANSLATION_API_KEY: string;
 
-      ROBOFLOW_API_KEY: string;
       MODEL_NAME: string;
       MODEL_VERSION: string;
+
+      MEME_TEMPLATE_ID: string;
 
       USER_JAN: string;
     }

@@ -1,7 +1,7 @@
 import type { User } from "discord.js";
 
 /**
- * Generates contextual random messages with user mentions
+ * @file Utility function to build random messages for various contexts.
  *
  * @param option Message category type
  * @param user Optional target user

@@ -1,6 +1,6 @@
 /**
+ * @file
  * Provides a singleton PostgreSQL connection pool using `pg`.
- * Ensures that only one pool is created and reused across the application.
  */
 
 import pg, { Pool } from "pg";
@@ -8,14 +8,17 @@ import "dotenv/config";
 
 const { Pool: PoolClass } = pg;
 
-/** Holds the singleton instance of the database pool. */
+/** @private Holds the singleton instance of the database pool. */
 let necoPool: Pool | null = null;
 
 /**
  * Retrieves the PostgreSQL connection pool, initializing it if necessary.
  *
  * @returns A promise resolving to the active `Pool` instance.
- * @throws If required environment variables are missing or connection fails.
+ * @throws If DB_HOST, DB_USER, DB_PASSWORD, or DATABASE is missing.
+ * @remarks
+ * - Defaults DB_PORT to 5432 when undefined.
+ * - Enables SSL (with `rejectUnauthorized: false`) when DB_SSL is truthy.
  */
 export async function getDb(): Promise<Pool> {
   // Return existing pool if already initialized
@@ -23,18 +26,24 @@ export async function getDb(): Promise<Pool> {
     return necoPool;
   }
 
+  const host = process.env.DB_HOST;
+  const user = process.env.DB_USER;
+  const dbPort = process.env.DB_PORT || "5432";
+  const password = process.env.DB_PASSWORD;
+  const database = process.env.DATABASE;
+
   // Ensure necessary environment variables are provided
-  if (!process.env.DB_HOST || !process.env.DB_USER || !process.env.DB_PASSWORD || !process.env.DATABASE) {
+  if (!host || !user || !password || !database) {
     throw new Error("Missing required database environment variables");
   }
 
   // Create a new Pool instance with configuration
   necoPool = new PoolClass({
-    host: process.env.DB_HOST,
-    port: parseInt(process.env.DB_PORT || "5432", 10),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DATABASE,
+    host: host,
+    port: parseInt(dbPort, 10),
+    user: user,
+    password: password,
+    database: database,
     // Enable SSL if DB_SSL is truthy, disabling certificate verification
     ssl: process.env.DB_SSL ? { rejectUnauthorized: false } : false,
   });

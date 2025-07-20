@@ -52,7 +52,7 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     // Resolve the guild context
     const guild = oldState.guild ?? newState.guild ?? client.guilds.cache.get(GUILD_ID);
     if (!guild) {
-      throw new Error("Failed to resolve guild from voice state");
+      throw new Error("Failed to resolve guild from voice state.");
     }
 
     // Retrieve the main voice channel, chair voice channel, and message channel
@@ -62,7 +62,7 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
 
     if (!mainChannel || !chairChannel || !messageChannel) {
       console.log(mainChannel, chairChannel, messageChannel);
-      throw new Error("Failed to resolve one or more required channels");
+      throw new Error("Failed to resolve one or more required channels.");
     }
 
     // Confirm appropriate channel types

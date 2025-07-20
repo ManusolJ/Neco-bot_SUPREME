@@ -1,5 +1,5 @@
 /**
- * Generates a random integer within the inclusive range [min, max].
+ * @file Utility function to generate a random integer within a specified range.
  *
  * @param min - The minimum integer value (inclusive).
  * @param max - The maximum integer value (inclusive).
