@@ -101,8 +101,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("Trade command executed outside of a guild.");
     }
 
-    const deferralMsg = "Creando el trade...";
-    await interactionService.feedbackReply(deferralMsg);
+    await interactionService.deferReply(true);
 
     const subcommand = interaction.options.getSubcommand();
 
@@ -295,7 +294,11 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
 //TODO: Implement requestPoints function
 async function requestPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
-  return await interactionService.errorReply("¡Esta funcion no esta implementada todavia! Vuelve mas tarde.");
+  const lazyMsg = "¡Esta funcion no esta implementada todavia! Vuelve mas tarde.";
+  return await interactionService.followReply({
+    content: lazyMsg,
+    flags: "Ephemeral",
+  });
 }
 
 async function punishUser(user: User, wantedPoints: number) {
@@ -355,7 +358,7 @@ async function generateMemeImage(points: number, reward: string): Promise<string
     {
       text: `${points} puntos`,
       x: 664,
-      y: 332,
+      y: 302,
       width: 300,
       height: 100,
     },
