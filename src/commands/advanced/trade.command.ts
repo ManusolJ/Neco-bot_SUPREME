@@ -326,7 +326,14 @@ async function generateMemeImage(points: number, reward: string): Promise<string
   data.append("template_id", MEME_ID);
   data.append("username", MEME_USERNAME);
   data.append("password", MEME_PASSWORD);
-  data.append("boxes", JSON.stringify(boxes));
+
+  boxes.forEach((box, i) => {
+    data.append(`boxes[${i}][text]`, box.text);
+    data.append(`boxes[${i}][x]`, box.x.toString());
+    data.append(`boxes[${i}][y]`, box.y.toString());
+    data.append(`boxes[${i}][width]`, box.width.toString());
+    data.append(`boxes[${i}][height]`, box.height.toString());
+  });
 
   const response = await fetch(MEME_URL, {
     method: "POST",
