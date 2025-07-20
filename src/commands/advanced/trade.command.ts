@@ -101,7 +101,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("Trade command executed outside of a guild.");
     }
 
-    await interactionService.deferReply(true);
+    await interactionService.deferReply();
 
     const subcommand = interaction.options.getSubcommand();
 
@@ -172,7 +172,7 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!authorAgent) {
     const errorMsg = "¡No pude obtener tu informacion de agente del caos! Vuelve a intentarlo.";
-    await await interactionService.followReply({
+    await interactionService.followReply({
       content: errorMsg,
       flags: "Ephemeral",
     });
@@ -325,7 +325,7 @@ async function getTradeEmbed(author: User, user: User, points: number, reason: s
 
   return new EmbedBuilder()
     .setColor("#6366c3")
-    .setTitle("ALERTA! NUEVO COMERCIO DETECTADO!")
+    .setTitle("ALERTA! NUEVO OFERTA DE COMERCIO DETECTADA!")
     .setDescription("Nueva transacción de puntos detectada.")
     .addFields(
       { name: "Vagabundo que regala", value: author.toString(), inline: true },
