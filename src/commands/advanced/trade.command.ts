@@ -13,6 +13,7 @@ import {
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
 import Meme from "@interfaces/meme.interface";
+import { isUserLocked, lockUser, unlockUser } from "@utils/lock-user.util";
 
 const MEME_URL = process.env.MEME_URL;
 const MEME_ID = process.env.MEME_TEMPLATE_ID;
@@ -129,13 +130,19 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!points || points < 1 || points > 20) {
     const errorMsg = "¡Los puntos deben estar entre 1 y 20!";
-    await interactionService.errorReply(errorMsg);
+    await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
     throw new Error(`Invalid points value in gift command. Points: ${points}`);
   }
 
   if (!author || !user || !reason || !reward) {
     const errorMsg = "¡Faltan datos necesarios para completar la transacción!";
-    await interactionService.errorReply(errorMsg);
+    await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
     throw new Error(
       `Missing required data in gift command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`
     );
@@ -144,12 +151,18 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   if (author.id === user.id) {
     await punishUser(author, points);
     const errorMsg = "¡No puedes regalarte puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
   }
 
   if (user.bot) {
     const errorMsg = "¡No puedes regalar puntos a un bot! Seras bobo!";
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
   }
 
   let authorAgent = await necoService.getAgent(author.id);
@@ -160,7 +173,10 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!authorAgent) {
     const errorMsg = "¡No pude obtener tu informacion de agente del caos! Vuelve a intentarlo.";
-    await interactionService.errorReply(errorMsg);
+    await await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
     throw new Error(`Author agent could not be retrieved in trade command. Author ID: ${author.id}`);
   }
 
@@ -173,18 +189,26 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!userAgent) {
     const errorMsg = "¡No pude obtener la informacion del usuario! Vuelve a intentarlo.";
-    await interactionService.errorReply(errorMsg);
+    await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
     throw new Error(`User agent could not be retrieved in trade command. User ID: ${user.id}`);
   }
 
   if (authorAgent.balance < points) {
     const errorMsg = "¡No tienes suficientes puntos para regalar! Seras pobre!";
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.followReply({
+      content: errorMsg,
+      flags: "Ephemeral",
+    });
   }
 
   const embedDisplay = await getTradeEmbed(author, user, points, reason, reward);
 
-  await interactionService.embedReply(embedDisplay);
+  await interactionService.followReply({
+    embeds: [embedDisplay],
+  });
 
   const row = new ActionRowBuilder<ButtonBuilder>();
   const acceptButton = new ButtonBuilder()
@@ -208,6 +232,15 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   });
 
   collector.on("collect", async (i) => {
+    if (isUserLocked(user.id) || isUserLocked(author.id)) {
+      const errorMsg = "Ya esta en proceso! Esperate un momento ansias!";
+      return await interactionService.followReply({
+        content: errorMsg,
+        flags: "Ephemeral",
+      });
+    }
+    lockUser(user.id);
+    lockUser(author.id);
     if (i.customId === "accept_trade") {
       try {
         const userNewBalance = userAgent.balance + points;
@@ -227,6 +260,9 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
         await i.update({ embeds: [successEmbed], components: [] });
       } catch (error) {
         console.error("Error during trade acceptance:", error);
+      } finally {
+        unlockUser(user.id);
+        unlockUser(author.id);
       }
     } else if (i.customId === "cancel_trade") {
       const titleMsg = "¡Comercio cancelado!";
@@ -239,6 +275,8 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
         .setFooter({ text: footerMsg });
 
       await i.update({ embeds: [cancelEmbed], components: [] });
+      unlockUser(user.id);
+      unlockUser(author.id);
     }
   });
 
