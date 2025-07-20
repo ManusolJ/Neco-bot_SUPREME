@@ -100,6 +100,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("Trade command executed outside of a guild.");
     }
 
+    interactionService.deferReply(true);
+
     const subcommand = interaction.options.getSubcommand();
 
     if (subcommand === "gift") {
