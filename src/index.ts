@@ -40,16 +40,14 @@ const client = new Client({
   ],
 });
 
-async () => {
-  try {
-    // Discovers and loads all event handlers dynamically from /events directory
-    await loadAllEvents(client);
+try {
+  // Discovers and loads all event handlers dynamically from /events directory
+  await loadAllEvents(client);
 
-    // Authenticate with Discord
-    await client.login(BOT_TOKEN);
-    console.log("Discord client authenticated successfully.");
-  } catch (error) {
-    console.error("Failed to start Discord client:", error);
-    process.exit(1);
-  }
-};
+  // Authenticate with Discord
+  await client.login(BOT_TOKEN);
+  console.log("Discord client authenticated successfully.");
+} catch (error) {
+  console.error("Failed to start Discord client:", error);
+  process.exit(1);
+}
