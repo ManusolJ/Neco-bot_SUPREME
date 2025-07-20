@@ -28,8 +28,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   try {
     if (!interaction.inGuild() || !interaction.guild) {
-      const errorMsg = "NYAAAHA! Este comando solo puede usar en el servidor!";
-      return await interactionService.errorReply(errorMsg);
+      throw new Error("Interaction used outside server.");
     }
 
     const member = await interaction.guild.members.fetch(author.id);
@@ -70,22 +69,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     let success = Math.random() < 0.8;
 
-    const cultistRole = process.env.CULTIST_ROLE;
+    let secondTry = false;
 
-    let secondTry;
+    const cultistRole = process.env.CULTIST_ROLE;
 
     if (!success && cultistRole && member.roles.cache.has(cultistRole)) {
       const replyMsg = "Fallaste! Menuda skill iss- Ah, espera... Que eres uno de mis fieles. Venga, otro intento...";
       await interactionService.standardReply(replyMsg);
       success = Math.random() < 0.6;
-      success ? (secondTry = true) : (secondTry = false);
+      secondTry = true;
     }
 
     if (!success) {
       await necoService.manipulateAgentBegState(member.id, true);
       const replyMsg = randomMessageBuilder("begFail");
       const image = path.resolve(IMAGE_FAIL);
-      return await interactionService.followReply({ content: replyMsg, files: [image] });
+      return secondTry
+        ? await interactionService.followReply({ content: replyMsg, files: [image] })
+        : interactionService.filesReply(replyMsg, [image]);
     }
 
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);
