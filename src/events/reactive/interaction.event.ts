@@ -12,6 +12,7 @@ import { execute as speak } from "@commands/basic/speak.command";
 import { execute as timer } from "@commands/basic/timer.command";
 import { execute as zaza } from "@commands/basic/zaza.command";
 import { execute as monster } from "@commands/advanced/monster.command";
+import { execute as trade } from "@commands/advanced/trade.command";
 
 /**
  * Central interaction router for slash commands
@@ -58,6 +59,9 @@ export default function interactionListener(client: Client) {
         break;
       case "monster-time":
         await monster(interaction);
+        break;
+      case "trade":
+        await trade(interaction);
         break;
     }
   });
