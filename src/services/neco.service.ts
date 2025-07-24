@@ -78,15 +78,19 @@ export default class NecoService {
   }
 
   /**
-   * Creates a new agent record with the specified Discord ID.
+   * Creates a new agent record with the specified Discord ID and returns the created Agent object.
    *
    * @param id - The Discord user ID for the new agent.
-   * @returns A promise resolving to `true` if insertion succeeded, `false` otherwise.
+   * @returns A promise resolving to the newly created `Agent` if insertion succeeded, or `null` if it failed.
    */
-  async createAgent(id: string): Promise<boolean> {
-    const sql = `INSERT INTO ${AGENT_TABLE} (id) VALUES ($1)`;
-    const { rowCount } = await this.pool.query(sql, [id]);
-    return rowCount ? rowCount > 0 : false;
+  async createAgent(id: string): Promise<Agent | null> {
+    const sql = `
+    INSERT INTO ${AGENT_TABLE} (id)
+    VALUES ($1)
+    RETURNING *
+  `;
+    const { rows } = await this.pool.query<Agent>(sql, [id]);
+    return rows[0] ?? null;
   }
 
   /**
