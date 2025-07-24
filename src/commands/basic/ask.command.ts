@@ -14,10 +14,10 @@ export const data = new SlashCommandBuilder()
       .setRequired(true)
   );
 
-const COST_OF_ACTION = 1;
 const IMAGE_PATH = "public/img/";
 const IMAGE_FAIL = path.join(IMAGE_PATH, "pilk.jpg");
 const IMAGE_CARE = path.join(IMAGE_PATH, "care.jpg");
+const COST_OF_ACTION = 1;
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -26,39 +26,38 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const author = interaction.user;
   const target = interaction.options.getUser("usuario", true) ?? null;
 
-  let balance = null;
+  if (!author || !target) {
+    const errorMsg = `NYAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
+    const reason = target
+      ? `NO pude conseguir tu informacion... Krill issue.`
+      : `NO pude conseguir la informacion del objetivo... Krill issue.`;
+    await interactionService.errorReply(errorMsg + reason);
+    throw new Error(reason);
+  }
 
-  try {
-    balance = await necoService.getAgent(author.id).then((agent) => (agent ? agent.balance : null));
-  } catch (e) {
-    const errorMsg = `Uuh... Hubo un error intentado controlar el saldo caotico... `;
-    console.error(errorMsg, e);
+  if (author.id === target.id || target.bot) {
+    const errorMsg = `NYAHA! No puedes usar mis poderes contra ti mismo o contra un bot, bobo!`;
     return await interactionService.errorReply(errorMsg);
   }
 
-  if (!author || target.bot) {
-    const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
-    const reason = target.bot
-      ? `NO puedes usar mis poderes contra mi, bobo!`
-      : `NO pude conseguir tu informacion o la del objetivo... Krill issue.`;
-    return await interactionService.errorReply(errorMsg + reason);
+  const agent = await necoService.getAgent(author.id);
+
+  if (!agent || agent.balance === null) {
+    const errorMsg = "Hm?! Hubo un problema intentado recuperar tu saldo caotico...";
+    await interactionService.errorReply(errorMsg);
+    throw new Error(`Agent not found or balance is null. Agent info: ${agent}`);
   }
+
+  const balance = agent.balance;
 
   if (!balance || balance < COST_OF_ACTION) {
-    const image = path.resolve(IMAGE_FAIL);
     const errorMsg = `NYAHAHAHA! ${author}, no tienes suficientes puntos! Pero si que tienes un skill issue!`;
-    return await interactionService.feedbackReply(errorMsg, [image]);
+    return await interactionService.feedbackReply(errorMsg, [path.resolve(IMAGE_FAIL)]);
   }
 
-  try {
-    await necoService.manipulateAgentBalance(author.id, balance - COST_OF_ACTION);
-  } catch (e) {
-    const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
-    console.error(errorMsg, e);
-    return await interactionService.errorReply(errorMsg);
-  }
+  const newBalance = balance - COST_OF_ACTION;
+  await necoService.manipulateAgentBalance(author.id, newBalance);
 
   const replyMsg = `Ohoo~? Bueno ${target}, eso es interesante pero...`;
-  const image = path.resolve(IMAGE_CARE);
-  return await interactionService.filesReply(replyMsg, [image]);
+  return await interactionService.filesReply(replyMsg, [path.resolve(IMAGE_CARE)]);
 }
