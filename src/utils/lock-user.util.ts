@@ -39,3 +39,10 @@ export function lockUser(id: string): void {
 export function unlockUser(id: string): void {
   userLocks.delete(id);
 }
+
+/**
+ * Clears all locks, allowing all users to be unlocked.
+ */
+export function clearAllLocks(): void {
+  userLocks.clear();
+}

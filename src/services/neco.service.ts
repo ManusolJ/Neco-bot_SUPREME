@@ -99,6 +99,40 @@ export default class NecoService {
   }
 
   /**
+   * Increases an agent's balance by a specified amount.
+   *
+   * @param id - The Discord user ID.
+   * @param amount - The amount to add to the balance.
+   * @returns A promise resolving to `true` if the operation was successful.
+   */
+  async increaseAgentBalance(id: string, amount: number): Promise<boolean> {
+    const sql = `
+    INSERT INTO ${AGENT_TABLE} (id, balance)
+    VALUES ($1, $2)
+    ON CONFLICT (id) DO UPDATE
+    SET balance = balance + EXCLUDED.balance
+  `;
+    return await this.handleQuery(sql, [id, amount]);
+  }
+
+  /**
+   * Decreases an agent's balance by a specified amount.
+   *
+   * @param id - The Discord user ID.
+   * @param amount - The amount to subtract from the balance.
+   * @returns A promise resolving to `true` if the operation was successful.
+   */
+  async decreaseAgentBalance(id: string, amount: number): Promise<boolean> {
+    const sql = `
+      INSERT INTO ${AGENT_TABLE} (id, balance)
+      VALUES ($1, $2)
+      ON CONFLICT (id) DO UPDATE
+      SET balance = balance - EXCLUDED.balance
+    `;
+    return await this.handleQuery(sql, [id, amount]);
+  }
+
+  /**
    * Sets or updates an agent's shame value.
    *
    * @param id - The Discord user ID.
