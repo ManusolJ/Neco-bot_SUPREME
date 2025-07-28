@@ -4,57 +4,58 @@ import {
   EmbedBuilder,
   AttachmentBuilder,
   GuildTextBasedChannel,
+  Message,
 } from "discord.js";
 import path from "path";
 import fs from "fs";
 
-// Default path to the error image used when sending error messages
+/** Absolute path to the default image used in error messages. */
 const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 /**
- * Service encapsulating message sending operations in a Discord text channel.
+ * Service class for sending messages to a specific Discord text channel.
  *
- * Provides methods to send plain text, embeds, files, and standardized error messages
- * with built‑in error handling and optional attachments.
+ * @remarks
+ * Provides helper methods for common content types: plain text, embeds, files,
+ * and error messages with a fallback image.
  */
 export default class MessageService {
-  /** The Discord text channel where messages will be sent */
-  private channel: GuildTextBasedChannel;
+  /** The text-based channel to which messages will be sent. */
+  private readonly channel: GuildTextBasedChannel;
 
   /**
-   * Constructs a new MessageService bound to a specific text channel.
+   * Creates a new instance of `MessageService` for the given channel.
    *
-   * @param channel - The target GuildTextBasedChannel for outgoing messages.
+   * @param channel - The target Discord text channel for all outgoing messages.
    */
   constructor(channel: GuildTextBasedChannel) {
     this.channel = channel;
   }
 
   /**
-   * Sends arbitrary content to the configured channel.
+   * Sends a message to the configured channel.
    *
-   * @param content - The message content, which may be a string, full options, or payload.
-   * @returns The sent message object.
-   * @throws Will re‑throw any error encountered during send.
+   * @param content - The content to send (text, payload, or full options).
+   * @returns A promise resolving to the sent `Message` object.
+   * @throws Will rethrow any error that occurs during sending.
    */
-  async send(content: string | MessageCreateOptions | MessagePayload) {
+  async send(content: string | MessageCreateOptions | MessagePayload): Promise<Message> {
     try {
-      const sent = await this.channel.send(content);
-      return sent;
+      return await this.channel.send(content);
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error("Message send failed:", error);
       throw error;
     }
   }
 
   /**
-   * Sends an embed along with optional text content.
+   * Sends an embed message, with optional accompanying text.
    *
-   * @param embed - A preconfigured EmbedBuilder instance.
-   * @param content - Optional accompanying text content.
-   * @returns The sent message object.
+   * @param embed - A fully configured embed object.
+   * @param content - Optional message content to accompany the embed.
+   * @returns A promise resolving to the sent message.
    */
-  async sendEmbed(embed: EmbedBuilder, content?: string) {
+  async sendEmbed(embed: EmbedBuilder, content?: string): Promise<Message> {
     return this.send({
       content,
       embeds: [embed],
@@ -62,13 +63,13 @@ export default class MessageService {
   }
 
   /**
-   * Sends text content and attaches one or more files.
+   * Sends a text message with one or more attached files.
    *
-   * @param content - The message text.
-   * @param filePaths - Array of absolute or relative file paths to attach.
-   * @returns The sent message object.
+   * @param content - The message body.
+   * @param filePaths - Array of paths to files to attach.
+   * @returns A promise resolving to the sent message.
    */
-  async sendFiles(content: string, filePaths: string[]) {
+  async sendWithFiles(content: string, filePaths: string[]): Promise<Message> {
     const files = filePaths.map((file) => new AttachmentBuilder(path.resolve(file)));
     return this.send({
       content,
@@ -77,12 +78,12 @@ export default class MessageService {
   }
 
   /**
-   * Sends an error notification message, attaching the default error image if available.
+   * Sends an error message, optionally with the default error image.
    *
-   * @param content - Error description text.
-   * @returns The sent message object.
+   * @param content - A description of the error or failure.
+   * @returns A promise resolving to the sent message.
    */
-  async sendError(content: string) {
+  async sendError(content: string): Promise<Message> {
     const errorImage = this.loadErrorImage();
     return this.send({
       content,
@@ -91,17 +92,17 @@ export default class MessageService {
   }
 
   /**
-   * Attempts to load the default error image from disk.
+   * Attempts to load the default error image for fallback error messages.
    *
-   * @returns An AttachmentBuilder for the error image, or null if unavailable.
+   * @returns An `AttachmentBuilder` instance, or `null` if the file is not found.
    */
   private loadErrorImage(): AttachmentBuilder | null {
     try {
       if (fs.existsSync(DEFAULT_ERROR_IMAGE_PATH)) {
         return new AttachmentBuilder(DEFAULT_ERROR_IMAGE_PATH);
       }
-    } catch (e) {
-      console.warn("Error image not found or unreadable:", e);
+    } catch (error) {
+      console.warn("Error loading fallback image:", error);
     }
     return null;
   }
