@@ -7,195 +7,166 @@ import {
   InteractionResponse,
   MessagePayload,
 } from "discord.js";
-import path from "path";
 import fs from "fs";
+import path from "path";
 
-// Default path to the error image used in interaction replies
 const DEFAULT_ERROR_IMAGE_PATH = path.resolve("public/img/error.jpg");
 
 /**
- * Service centralizing Discord slash‑command interaction responses.
- *
- * Offers methods for standard, ephemeral, file, embed, error, deferred,
- * follow‑up, edit, and delete operations with unified error handling.
+ * Centralized service for handling interaction replies.
+ * Supports standard, ephemeral, embed, file, error, and follow-up responses.
  */
 export default class InteractionService {
-  /** The interaction context for reply operations */
-  private interaction: ChatInputCommandInteraction;
+  private readonly interaction: ChatInputCommandInteraction;
 
-  /**
-   * Constructs a new InteractionService for a given command interaction.
-   *
-   * @param interaction - The ChatInputCommandInteraction to respond to.
-   */
   constructor(interaction: ChatInputCommandInteraction) {
     this.interaction = interaction;
   }
 
   /**
-   * Sends a standard public reply with plain text.
+   * Sends a basic public reply.
    *
-   * @param content - The reply text.
-   * @returns The interaction response.
+   * @param content - The text content of the reply.
    */
-  async standardReply(content: string) {
-    return this.handleResponse({ content });
+  async reply(content: string): Promise<InteractionResponse | void> {
+    return this.safeReply({ content });
   }
 
   /**
-   * Sends an ephemeral (user‑only) reply, optionally with file attachments.
+   * Sends an ephemeral reply (visible only to the user).
    *
-   * @param content - The reply text.
-   * @param files - Optional array of file paths to attach.
-   * @returns The interaction response.
+   * @param content - The message content.
+   * @param files - Optional list of file paths to attach.
    */
-  async feedbackReply(content: string, files: string[] | null = null) {
+  async replyEphemeral(content: string, files?: string[]): Promise<InteractionResponse | void> {
     const options: InteractionReplyOptions = {
       content,
       flags: "Ephemeral",
     };
 
-    if (files) {
-      options.files = files.map((file) => new AttachmentBuilder(file));
+    if (files && files.length > 0) {
+      options.files = files.map((f) => new AttachmentBuilder(f));
     }
 
-    return this.handleResponse(options);
+    return this.safeReply(options);
   }
 
   /**
    * Sends a public reply with file attachments.
    *
-   * @param content - The reply text.
-   * @param files - Array of file paths to attach.
-   * @returns The interaction response.
+   * @param content - The reply message.
+   * @param files - List of file paths to attach.
    */
-  async filesReply(content: string, files: string[]) {
+  async replyWithFiles(content: string, files: string[]): Promise<InteractionResponse | void> {
     const options: InteractionReplyOptions = {
       content,
-      files: files.map((file) => new AttachmentBuilder(file)),
+      files: files.map((f) => new AttachmentBuilder(f)),
     };
-    return this.handleResponse(options);
+    return this.safeReply(options);
   }
 
   /**
-   * Sends an ephemeral error reply with the default error image.
+   * Sends an ephemeral error message with a default image (if available).
    *
-   * @param content - The error message text.
-   * @returns The interaction response.
+   * @param content - The error message.
    */
-  async errorReply(content: string) {
-    const errorImage = this.loadErrorImage();
-    return this.handleResponse({
+  async replyError(content: string): Promise<InteractionResponse | void> {
+    const image = this.loadErrorImage();
+    return this.safeReply({
       content,
-      flags: "Ephemeral",
-      files: errorImage ? [errorImage] : undefined,
+      ephemeral: true,
+      files: image ? [image] : undefined,
     });
   }
 
   /**
-   * Sends an embed as the interaction reply.
+   * Sends an embed as a reply.
    *
-   * @param embed - A prebuilt EmbedBuilder instance.
-   * @returns The interaction response.
+   * @param embed - A preconstructed embed.
    */
-  async embedReply(embed: EmbedBuilder) {
-    return this.handleResponse({ embeds: [embed] });
+  async replyEmbed(embed: EmbedBuilder): Promise<InteractionResponse | void> {
+    return this.safeReply({ embeds: [embed] });
   }
 
   /**
-   * Defers the reply, showing a loading state.
+   * Defers the reply to show a loading state.
    *
-   * @param ephemeral - Whether the eventual reply should be ephemeral.
-   * @throws Will propagate any error encountered during defer.
+   * @param ephemeral - Whether the deferred message should be ephemeral.
    */
-  async deferReply(ephemeral = false) {
+  async deferReply(ephemeral = false): Promise<void> {
     try {
-      if (ephemeral) {
-        await this.interaction.deferReply({ flags: "Ephemeral" });
-      } else {
-        await this.interaction.deferReply();
-      }
+      await this.interaction.deferReply({ ephemeral });
     } catch (error) {
-      console.error("Defer reply failed:", error);
+      console.error("Defer failed:", error);
       throw error;
     }
   }
 
   /**
-   * Deletes the existing reply, if one has been sent.
-   *
-   * @returns Void promise once deletion completes.
-   * @throws If no reply exists or deletion fails.
+   * Deletes the current reply.
    */
-  async deleteReply() {
-    if (!this.interaction.replied) {
-      throw new Error("No reply to delete");
-    }
+  async deleteReply(): Promise<void> {
     try {
       await this.interaction.deleteReply();
     } catch (error) {
-      console.error("Delete reply failed:", error);
+      console.error("Delete failed:", error);
       throw error;
     }
   }
 
   /**
-   * Sends a follow‑up message after the initial reply.
+   * Sends a follow-up message after the initial reply.
    *
-   * @param content - The follow‑up content (text, payload, or options).
-   * @returns The follow‑up message object.
+   * @param content - The follow-up content.
    */
-  async followReply(content: string | MessagePayload | InteractionReplyOptions) {
+  async followUp(content: string | MessagePayload | InteractionReplyOptions): Promise<void> {
     try {
-      return await this.interaction.followUp(content);
+      await this.interaction.followUp(content);
     } catch (error) {
-      console.error("Follow up failed:", error);
+      console.error("Follow-up failed:", error);
       throw error;
     }
   }
 
   /**
-   * Edits the existing reply with new content.
+   * Edits the current reply with new content.
    *
-   * @param content - The new content (text, payload, or edit options).
-   * @returns The edited message object.
+   * @param content - New content or options.
    */
-  async editReply(content: string | MessagePayload | InteractionEditReplyOptions) {
+  async editReply(content: string | MessagePayload | InteractionEditReplyOptions): Promise<void> {
     try {
-      return await this.interaction.editReply(content);
+      await this.interaction.editReply(content);
     } catch (error) {
-      console.error("Edit reply failed:", error);
+      console.error("Edit failed:", error);
       throw error;
     }
   }
 
   /**
-   * Internal helper that performs the actual reply operation and traps errors.
+   * Internal helper that wraps `interaction.reply()` with error handling.
    *
-   * @param options - InteractionReplyOptions to pass to `reply()`.
-   * @returns The raw InteractionResponse or void.
+   * @param options - Standard reply options.
    */
-  private async handleResponse(options: InteractionReplyOptions): Promise<void | InteractionResponse> {
+  private async safeReply(options: InteractionReplyOptions): Promise<InteractionResponse | void> {
     try {
       return await this.interaction.reply(options);
     } catch (error) {
       console.error("Reply failed:", error);
-      throw error;
     }
   }
 
   /**
-   * Loads the default error image from disk for error replies.
+   * Loads the default error image from disk.
    *
-   * @returns An AttachmentBuilder or null if the file is inaccessible.
+   * @returns An attachment or null if not found.
    */
   private loadErrorImage(): AttachmentBuilder | null {
     try {
       if (fs.existsSync(DEFAULT_ERROR_IMAGE_PATH)) {
         return new AttachmentBuilder(DEFAULT_ERROR_IMAGE_PATH);
       }
-    } catch (e) {
-      console.warn("Error image not found or unreadable:", e);
+    } catch (error) {
+      console.warn("Failed to load error image:", error);
     }
     return null;
   }
