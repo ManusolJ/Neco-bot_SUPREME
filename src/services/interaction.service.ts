@@ -6,6 +6,7 @@ import {
   InteractionEditReplyOptions,
   InteractionResponse,
   MessagePayload,
+  MessageFlags,
 } from "discord.js";
 import fs from "fs";
 import path from "path";
@@ -41,7 +42,7 @@ export default class InteractionService {
   async replyEphemeral(content: string, files?: string[]): Promise<InteractionResponse | void> {
     const options: InteractionReplyOptions = {
       content,
-      flags: "Ephemeral",
+      flags: MessageFlags.Ephemeral,
     };
 
     if (files && files.length > 0) {
@@ -74,7 +75,7 @@ export default class InteractionService {
     const image = this.loadErrorImage();
     return this.safeReply({
       content,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       files: image ? [image] : undefined,
     });
   }
