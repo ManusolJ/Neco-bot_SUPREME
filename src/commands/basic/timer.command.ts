@@ -4,6 +4,13 @@ import path from "path";
 import InteractionService from "@services/interaction.service";
 import randomMessageBuilder from "@utils/build-random-message.util";
 
+// Paths for images and animations used in responses
+const ANIMATION_PATH = "public/animation/";
+const DANCE_ANIMATION = path.join(ANIMATION_PATH, "dance.gif");
+
+// Time in milliseconds to delete the reply after sending
+const TIME_FOR_REPLY_DELETE = 5000;
+
 export const data = new SlashCommandBuilder()
   .setName("timer")
   .setDescription("Dile a Neco-arc que te mande un aviso pasado un tiempo.")
@@ -23,43 +30,45 @@ export const data = new SlashCommandBuilder()
       .setMaxValue(1440)
   );
 
-const ANIMATION_PATH = "public/animation/";
-const DANCE_ANIMATION = path.join(ANIMATION_PATH, "dance.gif");
-
 export async function execute(interaction: ChatInputCommandInteraction) {
   const interactionService = new InteractionService(interaction);
   const timeUnit = interaction.options.getString("unidad", true);
   const timeQuantity = interaction.options.getInteger("cantidad", true);
 
+  // Validate time unit and quantity
   if (!timeUnit || !timeQuantity) {
     const errorMsg = "Nyahu?! Lo siento, pero no me he enterado bien...";
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 
+  // Convert time to milliseconds
   const milliseconds = timeUnit === "hour" ? timeQuantity * 60 * 60 * 1000 : timeQuantity * 60 * 1000;
 
+  // Validate milliseconds
   if (!milliseconds) {
     const errorMsg = "¿¡HUUUH?! ¡Si no se sumar! ¿¡Para que me dices nada?!";
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 
   const author = interaction.user;
 
+  // Validate author
   if (!author) {
     const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar tu informacion.`;
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 
   const msg = `¡Muy bien nyah~! Te avisaré en ${timeQuantity} ${
     timeUnit === "hour" ? (timeQuantity > 1 ? "horas" : "hora") : timeQuantity > 1 ? "minutos" : "minuto"
   }!`;
 
-  await interactionService.standardReply(msg);
+  await interactionService.reply(msg);
 
   setTimeout(async () => {
     await interactionService.deleteReply();
-  }, 5000);
+  }, TIME_FOR_REPLY_DELETE);
 
+  // Send a DM to the author after the specified time
   setTimeout(async () => {
     try {
       const replyMsg = randomMessageBuilder(data.name, author);

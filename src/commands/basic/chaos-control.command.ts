@@ -15,8 +15,8 @@ export const data = new SlashCommandBuilder()
   )
   .addIntegerOption((option) =>
     option
-      .setName("monedas")
-      .setDescription("Elije cuantas monedas quieres poner al schizo seleccionado.")
+      .setName("puntos")
+      .setDescription("Elije cuantas puntos quieres poner al schizo seleccionado.")
       .setRequired(true)
   );
 
@@ -25,30 +25,28 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const interactionService = new InteractionService(interaction);
 
   const target = interaction.options.getUser("usuario", true);
-  const balance = interaction.options.getInteger("monedas", true);
+  const balance = interaction.options.getInteger("puntos", true);
 
+  // Validate target user
   if (!target || target.bot) {
     const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
     const reason = target.bot
       ? `NO puedes usar mis poderes contra mi, bobo!`
       : `NO pude conseguir tu informacion o la del objetivo... Krill issue.`;
-    return await interactionService.errorReply(errorMsg + reason);
+    return await interactionService.replyError(errorMsg + reason);
   }
 
   try {
-    const agentExists = await necoService.checkAgentExists(target.id);
+    // Set the chaotic balance for the target user
+    await necoService.setAgentBalance(target.id, balance);
+    // Log the audit for the balance change
+    await necoService.logAudit(target.id, "balance", "N/A", balance.toString(), interaction.user.id);
 
-    if (!agentExists) {
-      await necoService.createAgent(target.id);
-    }
-
-    await necoService.manipulateAgentBalance(target.id, balance);
-
-    const replyMsg = `Ahora ${target.displayName} tiene ${balance} moneditas!`;
-    return await interactionService.feedbackReply(replyMsg);
+    const replyMsg = `Ahora ${target.displayName} tiene ${balance} puntos!`;
+    return await interactionService.replyEphemeral(replyMsg);
   } catch (e) {
     const errorMsg = `¡NYAAA! Algo salio MUY mal. Intenta de nuevo mas tarde... O diselo a Manuel.`;
     console.error(errorMsg, e);
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 }

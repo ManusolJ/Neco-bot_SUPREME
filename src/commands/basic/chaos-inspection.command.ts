@@ -27,18 +27,26 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const target = interaction.options.getUser("usuario", true);
   const hidden = interaction.options.getBoolean("oculto", false);
 
+  // Validate target user
   if (target.bot) {
     const errorMsg = `NO puedes usar mis poderes contra mi, bobo!`;
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 
-  const balance = await necoService.getAgent(target.id).then((agent) => (agent ? agent.balance : null));
+  const agent = await necoService.getAgent(target.id);
+
+  if (!agent || agent.balance === null) {
+    const errorMsg = `NYAHA! No pude recuperar la informacion de ${target.username}... Krill issue.`;
+    return await interactionService.replyError(errorMsg);
+  }
+
+  const balance = agent.balance;
 
   if (!balance) {
     const replyMsg = "Este schizo no tiene un solo punto! Le falta Pilk, vaya pringao.";
-    return hidden ? await interactionService.feedbackReply(replyMsg) : await interactionService.standardReply(replyMsg);
+    return hidden ? await interactionService.replyEphemeral(replyMsg) : await interactionService.reply(replyMsg);
   } else {
-    const replyMsg = `Veamos, ${target} tiene...${balance > 1 ? `${balance} monedas` : "1 moneda! LMAO, krill issue."}`;
-    return hidden ? await interactionService.feedbackReply(replyMsg) : await interactionService.standardReply(replyMsg);
+    const replyMsg = `Veamos, ${target} tiene...${balance > 1 ? `${balance} puntos` : "1 punto! LMAO, krill issue."}`;
+    return hidden ? await interactionService.replyEphemeral(replyMsg) : await interactionService.reply(replyMsg);
   }
 }

@@ -14,15 +14,17 @@ const IMAGE_ZAZA_R = path.join(IMAGE_PATH, "zaza-r.jpg");
 export async function execute(interaction: ChatInputCommandInteraction) {
   const interactionService = new InteractionService(interaction);
 
+  // Randomly decide if Ralsei is here
   let whyIsRalseiHere = Math.random() > 0.8;
 
+  // Reply to the interaction
   if (whyIsRalseiHere) {
     const replyMsg = "Toma tio... No le des tan fuerte, que creo que estas viendo cosas";
     const image = IMAGE_ZAZA_R;
-    return await interactionService.filesReply(replyMsg, [image]);
+    return await interactionService.replyWithFiles(replyMsg, [image]);
   } else {
     const replyMsg = "Un poquito de zaza para ti... Que disfruton eres.";
     const image = IMAGE_ZAZA;
-    return await interactionService.filesReply(replyMsg, [image]);
+    return await interactionService.replyWithFiles(replyMsg, [image]);
   }
 }
