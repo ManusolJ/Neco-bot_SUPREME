@@ -30,11 +30,6 @@ export default function chairEvent(client: Client): void {
 
 /**
  * Processes voice state changes for the "funny chair" feature:
- * 1. Verifies required environment variables and resolves guild and channels.
- * 2. Detects users joining or leaving the chair channel.
- * 3. Sends notification messages to the designated text channel.
- * 4. Applies a punishment role when a user leaves the chair and updates the database.
- * 5. Schedules removal of the punishment role after a fixed timeout and updates the database.
  *
  * @param client - The Discord.js client instance.
  * @param oldState - The user's previous voice state.
@@ -95,11 +90,10 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     }
 
     // Ensure the agent exists in the database
-    const exists = await necoService.checkAgentExists(target.id);
-    if (!exists) {
-      await necoService.createAgent(target.id);
+    let agent = await necoService.getAgent(target.id);
+    if (!agent) {
+      agent = await necoService.createAgent(target.id);
     }
-    const agent = await necoService.getAgent(target.id);
     if (!agent) {
       throw new Error(`Agent not found for user ${target.id}`);
     }
@@ -113,21 +107,42 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     // Handle user leaving the chair (apply punishment)
     if (leftChair && !target.roles.cache.has(funnyRole.id) && !agent.punished) {
       await target.roles.add(funnyRole);
-      await necoService.manipulateAgentPunishmentState(target.id, PUNISHED);
+      await necoService.setPunishmentState(target.id, PUNISHED);
       const leaveMsg = `Oh no~~ ${target.displayName} ha abandonado la silla cuck... ¡qué decepción!`;
       await messageService.send(leaveMsg);
-    }
 
-    // Schedule removal of punishment role after timeout
-    setTimeout(async () => {
-      const refreshed = guild.members.cache.get(target.id);
-      if (refreshed && refreshed.roles.cache.has(funnyRole.id)) {
-        await refreshed.roles.remove(funnyRole.id);
-        await necoService.manipulateAgentPunishmentState(target.id, !PUNISHED);
-        const releaseMsg = `${refreshed.displayName} ha sido liberado de la marca del cuck! Oops... Lo he dicho en voz alta? (¬‿¬) Nyehehe~~`;
-        await messageService.send(releaseMsg);
-      }
-    }, PUNISHMENT_TIME);
+      const targetId = target.id;
+      const roleId = funnyRole.id;
+      const guildId = guild.id;
+      const channelId = messageChannel.id;
+
+      // Schedule removal of punishment role after timeout
+      setTimeout(async () => {
+        try {
+          const currentGuild = client.guilds.cache.get(guildId);
+          if (!currentGuild) return;
+
+          // Fetch current member state
+          const currentMember = await currentGuild.members.fetch(targetId).catch(() => null);
+          if (!currentMember) return;
+
+          // Remove role if still applied
+          if (currentMember.roles.cache.has(roleId)) {
+            await currentMember.roles.remove(roleId);
+            await (await NecoService.getInstance()).setPunishmentState(targetId, !PUNISHED);
+
+            // Get current message channel
+            const currentChannel = currentGuild.channels.cache.get(channelId);
+            if (currentChannel?.isTextBased()) {
+              const releaseMsg = `${currentMember.displayName} ha sido liberado de la marca del cuck! Oops... Lo he dicho en voz alta? (¬‿¬) Nyehehe~~`;
+              await new MessageService(currentChannel).send(releaseMsg);
+            }
+          }
+        } catch (error) {
+          console.error("Error in punishment removal:", error);
+        }
+      }, PUNISHMENT_TIME);
+    }
   } catch (error) {
     console.error("Error processing chair event: ", error);
   }

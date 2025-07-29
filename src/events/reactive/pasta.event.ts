@@ -6,6 +6,9 @@ import chaosBuilder from "@utils/build-chaos.util";
 import reactionBuilder from "@utils/build-reaction.util";
 import randomMessageBuilder from "@utils/build-random-message.util";
 
+const MINIMUN_REWARD = 1;
+const MAXIMUM_REWARD = 5;
+
 /**
  * Event handler for copypasta channel
  * Rewards users for posting content with specific prefix
@@ -37,8 +40,10 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
 
   const msgService = new MessageService(channel);
 
+  const reward = chaosBuilder(MINIMUN_REWARD, MAXIMUM_REWARD);
+
   // Reward user with random points
-  await necoService.manipulateAgentBalance(author.id, chaosBuilder(1, 5));
+  await necoService.increaseAgentBalance(author.id, reward);
 
   // Generate random response
   const msg = randomMessageBuilder("copypasta", author);

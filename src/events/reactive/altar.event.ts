@@ -30,11 +30,7 @@ export default function altarEvent(client: Client): void {
 
 /**
  * Processes a new message in the altar channel. If the message contains
- * media (attachments or embeds) or a Twitter/X link, the author is:
- * 1. Ensured to exist as an agent in the database
- * 2. Awarded a random number of points between `MINIMUM_REWARD` and `MAXIMUM_REWARD`
- * 3. Sent a randomized response
- * 4. Given a reaction on their original message
+ * media (attachments or embeds) or a Twitter/X link, the author is rewarded
  *
  * @param message - The incoming Discord message to evaluate.
  * @returns A promise that resolves when processing completes.
@@ -54,6 +50,7 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
     if (!guild || !author) {
       throw new Error("Invalid message source: missing guild or author");
     }
+
     if (author.bot) {
       return;
     }
@@ -72,20 +69,9 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
     }
     const messageService = new MessageService(channel);
 
-    // Ensure the author exists in the agent database
-    const exists = await necoService.checkAgentExists(author.id);
-    if (!exists) {
-      await necoService.createAgent(author.id);
-    }
-    const agent = await necoService.getAgent(author.id);
-    if (!agent) {
-      throw new Error(`Agent not found for user ID ${author.id}`);
-    }
-
     // Award random points and update the agent’s balance
     const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
-    const newBalance = agent.balance + reward;
-    await necoService.manipulateAgentBalance(author.id, newBalance);
+    await necoService.increaseAgentBalance(author.id, reward);
 
     // Generate and send a contextual reply, then react to the original message
     const reply = randomMessageBuilder(MESSAGE_CASE, author);
