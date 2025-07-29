@@ -97,7 +97,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const interactionService = new InteractionService(interaction);
     if (!interaction.guild) {
       const errorMsg = "¡Este comando solo puede ser usado en un servidor!";
-      await interactionService.errorReply(errorMsg);
+      await interactionService.replyError(errorMsg);
       throw new Error("Trade command executed outside of a guild.");
     }
 
@@ -111,7 +111,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       return requestPoints(interaction, interactionService);
     } else {
       const errorMsg = "Huh?! No entiendo ese subcomando!";
-      await interactionService.errorReply(errorMsg);
+      await interactionService.replyError(errorMsg);
       throw new Error(`Unknown subcommand in trade command: ${subcommand}`);
     }
   } catch (error) {
@@ -129,13 +129,13 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!points || points < 1 || points > 20) {
     const errorMsg = "¡Los puntos deben estar entre 1 y 20!";
-    await interactionService.followReply(errorMsg);
+    await interactionService.followUp(errorMsg);
     throw new Error(`Invalid points value in gift command. Points: ${points}`);
   }
 
   if (!author || !user || !reason || !reward) {
     const errorMsg = "¡Me faltan datos necesarios para completar la transacción!";
-    await interactionService.followReply(errorMsg);
+    await interactionService.followUp(errorMsg);
     throw new Error(
       `Missing required data in gift command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`
     );
@@ -144,12 +144,12 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   if (author.id === user.id) {
     await punishUser(author, points);
     const errorMsg = "¡No puedes regalarte puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
-    return await interactionService.followReply(errorMsg);
+    return await interactionService.followUp(errorMsg);
   }
 
   if (user.bot) {
     const errorMsg = "¡No puedes regalar puntos a un bot! Seras bobo!";
-    return await interactionService.followReply(errorMsg);
+    return await interactionService.followUp(errorMsg);
   }
 
   let authorAgent = await necoService.getAgent(author.id);
@@ -160,7 +160,7 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!authorAgent) {
     const errorMsg = "¡No pude obtener tu informacion de agente del caos! Vuelve a intentarlo.";
-    await interactionService.followReply(errorMsg);
+    await interactionService.followUp(errorMsg);
     throw new Error(`Author agent could not be retrieved in trade command. Author ID: ${author.id}`);
   }
 
@@ -173,18 +173,18 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
   if (!userAgent) {
     const errorMsg = "¡No pude obtener la informacion del usuario! Vuelve a intentarlo.";
-    await interactionService.followReply(errorMsg);
+    await interactionService.followUp(errorMsg);
     throw new Error(`User agent could not be retrieved in trade command. User ID: ${user.id}`);
   }
 
   if (authorAgent.balance < points) {
     const errorMsg = "¡No tienes suficientes puntos para regalar! Seras pobre!";
-    return interactionService.followReply(errorMsg);
+    return interactionService.followUp(errorMsg);
   }
 
   const embedDisplay = await getTradeEmbed(author, user, points, reason, reward);
 
-  await interactionService.followReply({
+  await interactionService.followUp({
     embeds: [embedDisplay],
   });
 
@@ -199,8 +199,9 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
     .setStyle(ButtonStyle.Danger);
   row.addComponents(acceptButton, cancelButton);
 
-  const actionMessage = await interactionService.followReply({
+  const actionMessage = await interaction.followUp({
     components: [row],
+    fetchReply: true,
   });
 
   const collector = actionMessage.createMessageComponentCollector({
@@ -212,16 +213,14 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   collector.on("collect", async (i) => {
     if (isUserLocked(user.id) || isUserLocked(author.id)) {
       const errorMsg = "Ya esta en proceso! Esperate un momento ansias!";
-      return await interactionService.followReply(errorMsg);
+      return await interactionService.followUp(errorMsg);
     }
     lockUser(user.id);
     lockUser(author.id);
     if (i.customId === "accept_trade") {
       try {
-        const userNewBalance = userAgent.balance + points;
-        const authorNewBalance = authorAgent.balance - points;
-        await necoService.manipulateAgentBalance(author.id, authorNewBalance);
-        await necoService.manipulateAgentBalance(user.id, userNewBalance);
+        await necoService.decreaseAgentBalance(author.id, points);
+        await necoService.increaseAgentBalance(user.id, points);
 
         const titleMsg = "¡Transacción exitosa!";
         const successMsg = `¡${user.toString()} ha aceptado el regalo de ${author.toString()}!`;
@@ -271,7 +270,7 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 //TODO: Implement requestPoints function
 async function requestPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
   const lazyMsg = "¡Esta funcion no esta implementada todavia! Vuelve mas tarde.";
-  return await interactionService.followReply(lazyMsg);
+  return await interactionService.followUp(lazyMsg);
 }
 
 async function punishUser(user: User, wantedPoints: number) {
@@ -288,9 +287,7 @@ async function punishUser(user: User, wantedPoints: number) {
     throw new Error(`Agent could not be retrieved for user: ${user.id}`);
   }
 
-  const newBalance = agent.balance - wantedPoints;
-
-  await necoService.manipulateAgentBalance(user.id, newBalance);
+  await necoService.decreaseAgentBalance(user.id, wantedPoints);
 }
 
 async function getTradeEmbed(author: User, user: User, points: number, reason: string, reward: string) {

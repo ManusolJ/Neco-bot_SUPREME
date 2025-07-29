@@ -35,16 +35,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     const reason = !author
       ? "NO pude conseguir tu informacion... Krill issue."
       : "NO pude conseguir la imagen que has enviado... Internet issue.";
-    return await interactionService.errorReply(errorMsg + reason);
+    return await interactionService.replyError(errorMsg + reason);
   }
 
   if (!sentImage.contentType?.startsWith("image/")) {
-    return interactionService.errorReply("¡Eso no es una imagen!");
+    return interactionService.replyError("¡Eso no es una imagen!");
   }
 
   if (!guild) {
     const errorMsg = `NYAAAHA! Hubo un problema intentando recuperar la informacion del servidor...`;
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 
   let agent = await necoService.getAgent(author.id);
@@ -59,11 +59,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (!agent) {
     const errorMsg = "Nyahaaa! No pude obtener tu informacion de agente del caos!!! Vuelve a intentarlo!";
-    return await interactionService.errorReply(errorMsg);
+    return await interactionService.replyError(errorMsg);
   }
 
   const replyMsg = `Uno de mis fieles desea mostrar su devocion con una foto de monster eh?... Veamos...`;
-  await interactionService.filesReply(replyMsg, [sentImage.url]);
+  await interactionService.replyWithFiles(replyMsg, [sentImage.url]);
 
   const result = await detectMonster(sentImage.url, author);
   const now = new Date();
@@ -73,34 +73,33 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   switch (result.status) {
     case "success":
       if (isFriday) {
-        const newBalance = agent.balance + REWARD;
-        await necoService.manipulateAgentBalance(author.id, newBalance);
-        return interactionService.followReply(result.message);
+        await necoService.increaseAgentBalance(author.id, REWARD);
+        return interactionService.followUp(result.message);
       } else {
         if (PUNISHMENT_ROLE) {
           const member = await guild.members.fetch(author.id);
           await member.roles.add(PUNISHMENT_ROLE);
         }
-        return interactionService.followReply("Fantástico Monster, pero hoy no es viernes… Tu herejía será marcada.");
+        return interactionService.followUp("Fantástico Monster, pero hoy no es viernes… Tu herejía será marcada.");
       }
 
     case "lowConfidence":
-      return interactionService.followReply(result.message);
+      return interactionService.followUp(result.message);
 
     case "fail":
       if (isFriday) {
-        return interactionService.followReply(result.message);
+        return interactionService.followUp(result.message);
       } else {
-        return interactionService.followReply(
+        return interactionService.followUp(
           "Ni Monster ni viernes… ¿Qué clase de blasfemia es esta? A la proxima te desintegro."
         );
       }
 
     case "error":
-      return interactionService.followReply(result.message);
+      return interactionService.followUp(result.message);
 
     default:
-      return interactionService.followReply("Algo insólito ha ocurrido. Ni el caos lo predijo.");
+      return interactionService.followUp("Algo insólito ha ocurrido. Ni el caos lo predijo.");
   }
 }
 
