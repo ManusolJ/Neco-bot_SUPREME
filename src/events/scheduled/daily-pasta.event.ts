@@ -9,6 +9,7 @@ import RedditREST from "@interfaces/reddit-rest.interface";
 const GUILD_ID = env.GUILD_ID;
 const COPY_URL = env.COPYPASTA_URL;
 const COPY_CHANNEL_ID = env.COPYPASTA_CHANNEL;
+const REDDIT_USER_AGENT = "Necobot (by u/easytoremember1111)";
 
 /**
  * Schedules a daily copypasta post in a Discord guild.
@@ -27,12 +28,6 @@ export default function dailyPasta(client: Client): void {
 }
 
 /**
- * Executes the daily copypasta posting task:
- * 1. Validates required environment variables.
- * 2. Retrieves the target guild and text channel.
- * 3. Fetches Reddit data from the configured URL.
- * 4. Selects and formats a random copypasta.
- * 5. Sends the formatted text to the channel.
  *
  * @param client - The Discord.js Client instance.
  * @returns A promise that resolves once the task completes.
@@ -57,26 +52,36 @@ async function scheduledTask(client: Client): Promise<void> {
 
     const messageService = new MessageService(channel);
 
+    const headers = {
+      "User-Agent": REDDIT_USER_AGENT,
+      Accept: "application/json",
+    };
+
     // Fetch Reddit data
-    const response = await fetch(COPY_URL, {
-      headers: { "User-Agent": "Necobot by u/easytoremember1111" },
-    });
+    const response = await fetch(COPY_URL, { headers });
+
+    if (response.status === 429) {
+      const errorMsg = "NYAHAA! Reddit está bloqueando mis solicitudes! Hora de hacerles DDoS.";
+      await messageService.sendError(errorMsg);
+      throw new Error("Reddit rate limit exceeded");
+    }
 
     if (!response.ok) {
-      const errorMsg = "NYAHAA! No he podido conseguir nada de reddit! Basura de pagina.";
+      const errorMsg = `NYAHAA! Error de Reddit: ${response.status} ${response.statusText}`;
       await messageService.sendError(errorMsg);
-      throw new Error("Reddit fetch failed: " + response.statusText);
+      throw new Error(`Reddit API error: ${response.status} ${response.statusText}`);
     }
 
     const data: RedditREST = await response.json();
-    if (!data) {
-      const errorMsg = "NYAHAA! Respuesta invalida de reddit!";
+    if (!data || !data.data || data.data.children.length === 0) {
+      const errorMsg = "NYAHAA! Respuesta inválida de Reddit!";
       await messageService.sendError(errorMsg);
-      throw new Error("Invalid Reddit response");
+      throw new Error("Invalid Reddit response structure");
     }
 
     // Format and post a random copypasta
     const pasta = getPastaFromData(data);
+
     if (!pasta) {
       const errorMsg = "NYAHAA! No encontré buena pasta!";
       await messageService.sendError(errorMsg);

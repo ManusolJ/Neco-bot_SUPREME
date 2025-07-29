@@ -27,13 +27,6 @@ export default function weeklyChoosen(client: Client): void {
 /**
  * Performs the weekly leaderboard posting and balance reset.
  *
- * Steps:
- * 1. Validates required environment variables.
- * 2. Retrieves the guild and channel instances.
- * 3. Fetches all agents from the database.
- * 4. Posts a formatted leaderboard message of the top 5 agents.
- * 5. Resets all agents' balances to zero.
- *
  * @param client - The Discord.js Client instance.
  */
 async function scheduledTask(client: Client): Promise<void> {
@@ -66,7 +59,8 @@ async function scheduledTask(client: Client): Promise<void> {
 
     // Post the weekly ranking and then reset balances
     await messageService.send(getRankingMessage(agents));
-    await necoService.resetGlobalChaos();
+    await necoService.resetAllBalances();
+    await necoService.resetAllBeggedStates();
     const resetMessage = "¡Se ha reiniciado el marcador del caos! ¡A sembrar más caos!";
     await messageService.send(resetMessage);
     console.log("Weekly chaos reset completed.");

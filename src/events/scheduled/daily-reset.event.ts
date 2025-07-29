@@ -32,7 +32,7 @@ async function scheduledTask(): Promise<void> {
   const necoService = await NecoService.getInstance();
 
   // Reset all begged states in database
-  const isResetDone = await necoService.resetBegState();
+  const isResetDone = await necoService.resetAllBeggedStates();
 
   if (isResetDone) {
     console.log("Reseteo diario completado: ", Date.now());

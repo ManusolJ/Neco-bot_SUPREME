@@ -1,4 +1,4 @@
-import { Client, Poll, PollLayoutType } from "discord.js";
+import { Client, PollLayoutType } from "discord.js";
 import cron from "node-cron";
 import he from "he";
 
@@ -42,10 +42,6 @@ export default function dailyTrivia(client: Client): void {
 
 /**
  * Executes the daily trivia workflow
- * - Fetches question
- * - Translates to Spanish
- * - Creates poll
- * - Rewards winners
  *
  * @param client Discord client instance
  *
@@ -118,7 +114,7 @@ async function scheduledTask(client: Client): Promise<void> {
     await messageService.send(startMsg);
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
-    const questionType = translatedQuestion.type === "multiple" ? "opciones" : "verdadero o falso";
+    const questionType = translatedQuestion.type === "multiple" ? "opciones" : "verdadero/falso";
 
     const difficultyDisplayLevels: Record<string, string> = {
       easy: "facil",
@@ -180,6 +176,8 @@ async function scheduledTask(client: Client): Promise<void> {
 
       const loserCount = losers.length;
 
+      const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
+
       // Handle different outcome scenarios
       if (winnerCount === 0 && loserCount === 0) {
         // No votes at all
@@ -189,29 +187,30 @@ async function scheduledTask(client: Client): Promise<void> {
         // No winners, only losers
         const noWinnersMsg = `Nadie ha acertado, lmao. Bastante patetico. En fin, no pasa nada. Lavaos el pilk del cerebro e intendadlo mañana.`;
         return await messageService.send(noWinnersMsg);
+      } else if (winnerCount > 0 && loserCount == 0) {
+        // All participants are winners
+        const allWinnersMsg = `Todos han acertado! Increible! No os preocupeis, todos recibireis una recompensa.`;
+        await messageService.send(allWinnersMsg);
+
+        for (const [userId, user] of winners) {
+          await necoService.increaseAgentBalance(userId, reward);
+        }
       } else {
         // Announce winners and distribute rewards
         const winnerNames = Array.from(winners.values())
           .map((u) => u.username)
           .join(", ");
-        await messageService.send(`Los ganadores son: ${winnerNames}! Felicidades!`);
+        const congratsMsg = `Los ganadores son: ${winnerNames}! Felicidades! Para vosotros hay ${reward} puntos por ser taaaaan listos!`;
+        await messageService.send(congratsMsg);
 
         for (const [userId, user] of winners) {
-          const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
-          if (await necoService.checkAgentExists(userId)) {
-            const agent = await necoService.getAgent(userId);
-            if (agent) {
-              await necoService.manipulateAgentBalance(userId, agent.balance + reward);
-            }
-          } else {
-            await necoService.createAgent(userId);
-            await necoService.manipulateAgentBalance(userId, reward);
-          }
+          await necoService.increaseAgentBalance(userId, reward);
         }
 
         // Mock losers
         const loserNames = losers.map((u) => u.username).join(", ");
-        return await messageService.send(`Los perdedores son: ${loserNames}. No os preocupeis... Por ahora.`);
+        const loserMsg = `Los perdedores son: ${loserNames}. Para vosotros... Una colleja en las bolas. Por bobos.`;
+        return await messageService.send(loserMsg);
       }
     }, msUntilExpiry + buffer);
   } catch (error) {

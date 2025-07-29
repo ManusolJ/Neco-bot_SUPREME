@@ -1,4 +1,4 @@
-import { Client, User } from "discord.js";
+import { Client } from "discord.js";
 import { env } from "process";
 import cron from "node-cron";
 
@@ -26,17 +26,12 @@ const MESSAGE_CHANNEL_ID = env.NECO_MESSAGES_CHANNEL;
  */
 export default function dailyGreeting(client: Client): void {
   client.once("ready", () => {
-    // Schedule the task to run every day at 12:00 Europe/Madrid timezone
     cron.schedule("0 12 * * *", async () => scheduledTask(client), { timezone: "Europe/Madrid" });
   });
 }
 
 /**
  * Executes the scheduled daily greeting task:
- * 1. Fetches the configured guild and channel.
- * 2. Posts a day-specific greeting message.
- * 3. Sets up a reaction collector for REACTION_TIME milliseconds.
- * 4. Rewards each unique non-bot reactor with random points between MINIMUM_REWARD and MAXIMUM_REWARD.
  *
  * @param client - The Discord.js Client instance.
  * @returns A Promise that resolves once the task completes or errors out.
@@ -48,11 +43,12 @@ async function scheduledTask(client: Client): Promise<void> {
       throw new Error("Missing environment variables for guild or message channel");
     }
 
-    if (!Array.isArray(dailyNecoMessages) || !dailyNecoMessages.length) {
+    // Validate daily greeting messages
+    if (!Array.isArray(dailyNecoMessages) || dailyNecoMessages.length === 0) {
       throw new Error("Daily greeting messages are not properly defined");
     }
 
-    // Initialize services and fetch guild
+    // Initialize db service and fetch guild
     const necoService = await NecoService.getInstance();
     const guild = client.guilds.cache.get(GUILD_ID);
     if (!guild) {
@@ -65,6 +61,7 @@ async function scheduledTask(client: Client): Promise<void> {
       throw new Error("Invalid message channel or not text-based");
     }
 
+    // Initialize message service
     const messageService = new MessageService(channel);
 
     // Determine today's index and fetch corresponding message
@@ -90,6 +87,7 @@ async function scheduledTask(client: Client): Promise<void> {
     const rewardedUsers = new Set<string>();
 
     const reward = chaosBuilder(MINIMUM_REWARD, MAXIMUM_REWARD);
+
     // Handle each collected reaction
     collector
       .on("collect", async (reaction, user) => {
@@ -106,7 +104,6 @@ async function scheduledTask(client: Client): Promise<void> {
           lockUser(userId);
           try {
             await necoService.increaseAgentBalance(userId, reward);
-            console.log(`Awarded ${reward} points to ${user.tag}`);
           } catch (err) {
             console.error(`Failed to award points to ${user.tag}:`, err);
           } finally {
@@ -118,11 +115,9 @@ async function scheduledTask(client: Client): Promise<void> {
         const userId = user.id;
         rewardedUsers.delete(userId);
         await necoService.decreaseAgentBalance(userId, reward);
-        console.log(`Removed reaction from ${user.tag}, no longer rewarded.`);
       })
       .on("end", () => {
         rewardedUsers.clear();
-        console.log("Collector ended. Awarded points to:", rewardedUsers.size, "users.");
       });
   } catch (error) {
     console.error("Error in daily greeting task:", error);
@@ -184,6 +179,6 @@ const dailyNecoMessages: string[][] = [
   [
     "Sábado de chill: toca ver una peli, molestar a Joel o fingir que no existes, pero no salir de casa por supuesto. Eso seria una locura.",
     "Sábado Paranóico: Cierra las cortinas, revisa 7 veces la cerradura. ¿Escuchaste pasos? Son los skinwalkers... (⊙_⊙",
-    "Sábado de Reclusión: Ordena pizza con extra de queso y miedo existencial. Hoy el mundo exterior NO EXISTE. (´-﹏-`；)",
+    "Sábado de Reclusión: Ordena pizza con extra de queso y miedo existencial. Hoy el mundo exterior NO EXISTE. (´-﹏-`)",
   ],
 ];
