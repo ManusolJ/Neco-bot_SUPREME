@@ -112,7 +112,7 @@ export default class NecoService {
     INSERT INTO ${AGENT_TABLE} (id, balance)
     VALUES ($1, $2)
     ON CONFLICT (id) DO UPDATE
-    SET balance = balance + EXCLUDED.balance
+    SET balance = agents.balance + EXCLUDED.balance
   `;
     return await this.handleQuery(sql, [id, amount]);
   }
