@@ -2,6 +2,7 @@ import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder }
 
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
+import AuditLog from "@interfaces/audit-log.interface";
 
 export const data = new SlashCommandBuilder()
   .setName("chaos-control")
@@ -37,10 +38,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   try {
+    const currentBalance = await necoService.getAgent(target.id).then((agent) => agent?.balance || 0);
     // Set the chaotic balance for the target user
     await necoService.setAgentBalance(target.id, balance);
+
+    const audit: AuditLog = {
+      authorId: interaction.user.id,
+      targetId: target.id,
+      changedField: "set_balance",
+      previousValue: currentBalance.toString(),
+      newValue: balance.toString(),
+    };
+
     // Log the audit for the balance change
-    await necoService.logAudit(target.id, "balance", "N/A", balance.toString(), interaction.user.id);
+    await necoService.logAudit(audit);
 
     const replyMsg = `Ahora ${target.displayName} tiene ${balance} puntos!`;
     return await interactionService.replyEphemeral(replyMsg);
