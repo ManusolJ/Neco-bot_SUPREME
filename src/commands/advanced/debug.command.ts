@@ -3,7 +3,7 @@ import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
 import AuditLog from "@interfaces/audit-log.interface";
 
-const data = new SlashCommandBuilder()
+export const data = new SlashCommandBuilder()
   .setName("debug")
   .setDescription("Debug command operations for admin purposes.")
   .addSubcommand((subcommand) =>
