@@ -1,6 +1,8 @@
 import { Pool } from "pg";
 import { getDb } from "../db";
+
 import type Agent from "@interfaces/agent.interface";
+import type AuditLog from "@interfaces/audit-log.interface";
 
 // Constants for table names
 const AGENT_TABLE = "agents";
@@ -195,27 +197,23 @@ export default class NecoService {
   /**
    * Logs a field change for an agent in the audit table.
    *
-   * @param agentId - The agent whose record was modified.
-   * @param changedField - The name of the changed column.
-   * @param oldValue - The previous value of the field.
-   * @param newValue - The updated value.
-   * @param changedBy - The Discord ID of the user who made the change.
+   * @param auditLog - Object containing audit log details.
    * @returns A promise resolving to `true` if the log was inserted.
    */
-  async logAudit(
-    agentId: string,
-    changedField: string,
-    oldValue: string,
-    newValue: string,
-    changedBy: string
-  ): Promise<boolean> {
+  async logAudit(auditLog: AuditLog): Promise<boolean> {
     const sql = `
       INSERT INTO ${AUDIT_TABLE}
         (agent_id, changed_field, old_value, new_value, changed_by)
       VALUES
         ($1, $2, $3, $4, $5)
     `;
-    return await this.handleQuery(sql, [agentId, changedField, oldValue, newValue, changedBy]);
+    return await this.handleQuery(sql, [
+      auditLog.targetId,
+      auditLog.changedField,
+      auditLog.previousValue,
+      auditLog.newValue,
+      auditLog.authorId,
+    ]);
   }
 
   /**
