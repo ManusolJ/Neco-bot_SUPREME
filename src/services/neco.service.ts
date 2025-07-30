@@ -159,7 +159,7 @@ export default class NecoService {
    */
   async setBeggedState(id: string, state: boolean): Promise<boolean> {
     const sql = `UPDATE ${AGENT_TABLE} SET begged = $1 WHERE id = $2`;
-    return await this.handleQuery(sql, [id, state]);
+    return await this.handleQuery(sql, [state, id]);
   }
 
   /**
@@ -171,7 +171,7 @@ export default class NecoService {
    */
   async setPunishmentState(id: string, state: boolean): Promise<boolean> {
     const sql = `UPDATE ${AGENT_TABLE} SET punished = $1 WHERE id = $2`;
-    return await this.handleQuery(sql, [id, state]);
+    return await this.handleQuery(sql, [state, id]);
   }
 
   /**
