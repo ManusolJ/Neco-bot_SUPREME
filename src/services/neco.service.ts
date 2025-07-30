@@ -145,7 +145,7 @@ export default class NecoService {
     const sql = `
       INSERT INTO ${AGENT_TABLE} (id, shame)
       VALUES ($1, $2)
-      ON CONFLICT (id) DO UPDATE SET shame = EXCLUDED.shame
+      ON CONFLICT (id) DO UPDATE SET ${AGENT_TABLE}.shame = EXCLUDED.shame
     `;
     return await this.handleQuery(sql, [id, shame]);
   }
