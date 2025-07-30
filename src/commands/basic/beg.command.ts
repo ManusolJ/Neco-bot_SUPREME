@@ -135,9 +135,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     // Handle success case
     const awarded = chaosBuilder(MINIMUM_AWARDED, MAXIMUM_AWARDED);
-    const newBalance = agent.balance + awarded;
     await necoService.setBeggedState(author.id, true);
-    await necoService.increaseAgentBalance(author.id, newBalance);
+    await necoService.increaseAgentBalance(author.id, awarded);
     const replyMsg = `${randomMessageBuilder(data.name, author)} ${
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;

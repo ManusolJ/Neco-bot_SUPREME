@@ -152,7 +152,13 @@ export default class InteractionService {
    */
   private async safeReply(options: InteractionReplyOptions): Promise<InteractionResponse | void> {
     try {
-      return await this.interaction.reply(options);
+      if (this.interaction.replied || this.interaction.deferred) {
+        // Interaction already replied/deferred → use edit or followUp
+        await this.interaction.followUp(options);
+      } else {
+        // First-time reply
+        return await this.interaction.reply(options);
+      }
     } catch (error) {
       console.error("Reply failed:", error);
     }
