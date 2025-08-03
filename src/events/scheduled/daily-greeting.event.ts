@@ -129,13 +129,11 @@ async function scheduledTask(client: Client): Promise<void> {
  */
 const dailyNecoMessages: string[][] = [
   // Domingo (Sunday)
-  //TODO: Uncomment once day has passed.
   [
-    // "Domingo de Gooning: pierde la noción del tiempo, entrega tu alma al edging eterno, y reza a Ranni o Astolfo Nyaaaa~~",
-    // "Domingo de Furros: ¿¡Quien decidio hacer esto fiesta nacional!? Aleja tus sucias patas de la pantalla!(◣_◢) ",
-    // "Domingo de Femboys: Enciende velas a Astolfo, ofrenda latas de Monster vacías y repite: 'El gooning nunca termina'. (´• ω •`)",
-    // "Domingo de Robots: Me puedes llamar hombre morado, porque voy a poner un niño dentro de ese robot. (≧▽≦) ",
-    "Domingo de Goo- Como? Que hoy hay campo? De Victor??? En esta economía? Pues nada! Hoy hay que tocar cesped y rezar que no te quedes al campo esclavizado. Domingo Campo Edition!! (≧▽≦) Nyaa~",
+    "Domingo de Gooning: pierde la noción del tiempo, entrega tu alma al edging eterno, y reza a Ranni o Astolfo Nyaaaa~~",
+    "Domingo de Furros: ¿¡Quien decidio hacer esto fiesta nacional!? Aleja tus sucias patas de la pantalla!(◣_◢) ",
+    "Domingo de Femboys: Enciende velas a Astolfo, ofrenda latas de Monster vacías y repite: 'El gooning nunca termina'. (´• ω •`)",
+    "Domingo de Robots: Me puedes llamar hombre morado, porque voy a poner un niño dentro de ese robot. (≧▽≦) ",
   ],
 
   // Lunes (Monday)
