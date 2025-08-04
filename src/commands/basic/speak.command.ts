@@ -34,7 +34,8 @@ export const data = new SlashCommandBuilder()
         { name: "El goblino", value: "neco_boblin" },
         { name: "Shawty", value: "shawty" },
         { name: "Minors", value: "grooming-neco" },
-        { name: "Banana♪", value: "banana" }
+        { name: "Banana♪", value: "banana" },
+        { name: "truck", value: "truck" }
       )
   );
 
