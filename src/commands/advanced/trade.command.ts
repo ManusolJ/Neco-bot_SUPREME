@@ -432,7 +432,7 @@ async function getTradeEmbed(
   reward: string,
   isRequest: boolean = false
 ) {
-  const meme = await generateMemeImage(points, reward);
+  const meme = await generateMemeImage(points, reward, isRequest);
   const isRequestText = isRequest ? "Pide" : "Regala";
   const otherText = isRequest ? "Paga" : "Recibe";
 
@@ -459,17 +459,19 @@ async function getTradeEmbed(
     .setImage(meme);
 }
 
-async function generateMemeImage(points: number, reward: string): Promise<string> {
+async function generateMemeImage(points: number, reward: string, isRequest: boolean): Promise<string> {
+  const flavorText = points > 1 ? "puntos" : "punto";
+
   const boxes = [
     {
-      text: `${reward}`,
+      text: `${isRequest ? `${points} ${flavorText}` : reward}`,
       x: 65,
       y: 320,
       width: 300,
       height: 100,
     },
     {
-      text: `${points} puntos`,
+      text: `${isRequest ? reward : `${points} ${flavorText}`}`,
       x: 635,
       y: 302,
       width: 300,
