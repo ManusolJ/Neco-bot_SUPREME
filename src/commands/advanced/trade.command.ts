@@ -1,7 +1,5 @@
 import {
   ActionRowBuilder,
-  Attachment,
-  AttachmentBuilder,
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
@@ -330,11 +328,11 @@ async function requestPoints(interaction: ChatInputCommandInteraction, interacti
 
   const row = new ActionRowBuilder<ButtonBuilder>();
   const acceptButton = new ButtonBuilder()
-    .setCustomId("accept_request")
+    .setCustomId("accept_trade")
     .setLabel("Aceptar")
     .setStyle(ButtonStyle.Success);
   const cancelButton = new ButtonBuilder()
-    .setCustomId("cancel_request")
+    .setCustomId("cancel_trade")
     .setLabel("Cancelar")
     .setStyle(ButtonStyle.Danger);
   row.addComponents(acceptButton, cancelButton);
