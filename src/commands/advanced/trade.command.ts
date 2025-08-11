@@ -267,7 +267,6 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   });
 }
 
-//TODO: Implement requestPoints function
 async function requestPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
   const necoService = await NecoService.getInstance();
   const author = interaction.user;
@@ -361,7 +360,7 @@ async function requestPoints(interaction: ChatInputCommandInteraction, interacti
         await necoService.increaseAgentBalance(author.id, points);
 
         const titleMsg = "¡Transacción exitosa!";
-        const successMsg = `¡${user.toString()} ha aceptado el regalo de ${author.toString()}!`;
+        const successMsg = `¡${user.toString()} ha aceptado donar deliciosos puntos a ${author.toString()}!`;
         const footerMsg = "Gracias por usar el sistema de comercio Necobot™.";
         const successEmbed = new EmbedBuilder()
           .setColor("#22c55e")
