@@ -19,7 +19,7 @@ const MESSAGE_CHANNEL_ID = process.env.NECO_MESSAGES_CHANNEL;
 
 // Trivia settings
 const AMOUNT_OF_QUESTIONS = "1";
-const WAIT_TIME_BETWEEN_MESSAGES = 2000;
+const WAIT_TIME_BETWEEN_MESSAGES = 3000;
 const MINIMUM_REWARD = 1;
 const MAXIMUM_REWARD = 4;
 
@@ -164,6 +164,9 @@ async function scheduledTask(client: Client): Promise<void> {
         throw new Error("Correct answer not found in poll.");
       }
 
+      const correctAnswerMsg = `La respuesta correcta era: ${translatedQuestion.correctAnswer}.`;
+      await messageService.send(correctAnswerMsg);
+
       // Process winners and losers
       const winners = await correct.fetchVoters();
       const winnerCount = winners.size;
@@ -189,7 +192,7 @@ async function scheduledTask(client: Client): Promise<void> {
         return await messageService.send(noWinnersMsg);
       } else if (winnerCount > 0 && loserCount == 0) {
         // All participants are winners
-        const allWinnersMsg = `Todos han acertado! Increible! No os preocupeis, todos recibireis una recompensa.`;
+        const allWinnersMsg = `Todos han acertado! Increible! No os preocupeis, todos recibireis una bonita recompensa de ${reward} puntos.`;
         await messageService.send(allWinnersMsg);
 
         for (const [userId, user] of winners) {
