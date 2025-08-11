@@ -182,7 +182,9 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
     return interactionService.followUp(errorMsg);
   }
 
-  const embedDisplay = await getTradeEmbed(author, user, points, reason, reward);
+  const isRequest = false;
+
+  const embedDisplay = await getTradeEmbed(author, user, points, reason, reward, isRequest);
 
   await interactionService.followUp({
     embeds: [embedDisplay],
@@ -269,8 +271,140 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
 
 //TODO: Implement requestPoints function
 async function requestPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
-  const lazyMsg = "¡Esta funcion no esta implementada todavia! Vuelve mas tarde.";
-  return await interactionService.followUp(lazyMsg);
+  const necoService = await NecoService.getInstance();
+  const author = interaction.user;
+  const user = interaction.options.getUser("usuario", true);
+  const points = interaction.options.getInteger("puntos", true);
+  const reason = interaction.options.getString("razon") || "Solo soy un pobre vagabundo goblino pidiendo puntos.";
+  const reward = interaction.options.getString("recompensa") || "Nada, soy insolvente.";
+
+  if (!points || points < 1 || points > 20) {
+    const errorMsg = "¡Los puntos deben estar entre 1 y 20!";
+    await interactionService.followUp(errorMsg);
+    throw new Error(`Invalid points value in request command. Points: ${points}`);
+  }
+
+  if (!author || !user || !reason || !reward) {
+    const errorMsg = "¡Me faltan datos necesarios para completar la transacción!";
+    await interactionService.followUp(errorMsg);
+    throw new Error(
+      `Missing required data in request command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`
+    );
+  }
+
+  if (author.id === user.id) {
+    await punishUser(author, points);
+    const errorMsg = "¡No puedes pedir puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
+    return await interactionService.followUp(errorMsg);
+  }
+
+  if (user.bot) {
+    const errorMsg = "¡No puedes pedir puntos a un bot! Seras bobo!";
+    return await interactionService.followUp(errorMsg);
+  }
+
+  let authorAgent = await necoService.getAgent(author.id);
+  let userAgent = await necoService.getAgent(user.id);
+
+  if (!authorAgent) {
+    authorAgent = await necoService.createAgent(author.id);
+  }
+
+  if (!userAgent) {
+    userAgent = await necoService.createAgent(user.id);
+  }
+
+  if (!authorAgent || !userAgent) {
+    const errorMsg = "¡No pude obtener la informacion de los agentes! Vuelve a intentarlo.";
+    await interactionService.followUp(errorMsg);
+    throw new Error(`Agents could not be retrieved in request command. Author ID: ${author.id}, User ID: ${user.id}`);
+  }
+
+  const isRequest = true;
+
+  const embedDisplay = await getTradeEmbed(author, user, points, reason, reward, isRequest);
+
+  await interactionService.followUp({
+    embeds: [embedDisplay],
+  });
+
+  const row = new ActionRowBuilder<ButtonBuilder>();
+  const acceptButton = new ButtonBuilder()
+    .setCustomId("accept_request")
+    .setLabel("Aceptar")
+    .setStyle(ButtonStyle.Success);
+  const cancelButton = new ButtonBuilder()
+    .setCustomId("cancel_request")
+    .setLabel("Cancelar")
+    .setStyle(ButtonStyle.Danger);
+  row.addComponents(acceptButton, cancelButton);
+
+  const actionMessage = await interaction.followUp({
+    components: [row],
+    fetchReply: true,
+  });
+
+  const collector = actionMessage.createMessageComponentCollector({
+    filter: (i) => i.user.id === user.id,
+    time: COLLECTOR_TIME,
+    max: 1,
+  });
+
+  collector.on("collect", async (i) => {
+    if (isUserLocked(user.id) || isUserLocked(author.id)) {
+      const errorMsg = "Ya esta en proceso! Esperate un momento ansias!";
+      return await interactionService.followUp(errorMsg);
+    }
+    lockUser(user.id);
+    lockUser(author.id);
+    if (i.customId === "accept_trade") {
+      try {
+        await necoService.decreaseAgentBalance(user.id, points);
+        await necoService.increaseAgentBalance(author.id, points);
+
+        const titleMsg = "¡Transacción exitosa!";
+        const successMsg = `¡${user.toString()} ha aceptado el regalo de ${author.toString()}!`;
+        const footerMsg = "Gracias por usar el sistema de comercio Necobot™.";
+        const successEmbed = new EmbedBuilder()
+          .setColor("#22c55e")
+          .setTitle(titleMsg)
+          .setDescription(successMsg)
+          .setFooter({ text: footerMsg });
+
+        await i.update({ embeds: [successEmbed], components: [] });
+      } catch (error) {
+        console.error("Error during trade acceptance:", error);
+      } finally {
+        unlockUser(user.id);
+        unlockUser(author.id);
+      }
+    } else if (i.customId === "cancel_trade") {
+      const titleMsg = "¡Comercio cancelado!";
+      const cancelMsg = "No se ha aceptado el comercio. Los puntos no se han transferido.";
+      const footerMsg = "Gracias por usar el sistema de comercio Necobot™.";
+      const cancelEmbed = new EmbedBuilder()
+        .setColor("#f87171")
+        .setTitle(titleMsg)
+        .setDescription(cancelMsg)
+        .setFooter({ text: footerMsg });
+
+      await i.update({ embeds: [cancelEmbed], components: [] });
+      unlockUser(user.id);
+      unlockUser(author.id);
+    }
+  });
+
+  collector.on("end", async (collected, reason) => {
+    if (reason === "time") {
+      const timeoutEmbed = new EmbedBuilder()
+        .setColor("#f87171")
+        .setTitle("¡Tiempo agotado!")
+        .setDescription("El tiempo para aceptar el comercio ha expirado. Los puntos no se han transferido.")
+        .setFooter({ text: "Gracias por usar el sistema de comercio Necobot™." });
+
+      await actionMessage.edit({ embeds: [timeoutEmbed], components: [] });
+    }
+  });
 }
 
 async function punishUser(user: User, wantedPoints: number) {
@@ -290,16 +424,25 @@ async function punishUser(user: User, wantedPoints: number) {
   await necoService.decreaseAgentBalance(user.id, wantedPoints);
 }
 
-async function getTradeEmbed(author: User, user: User, points: number, reason: string, reward: string) {
+async function getTradeEmbed(
+  author: User,
+  user: User,
+  points: number,
+  reason: string,
+  reward: string,
+  isRequest: boolean = false
+) {
   const meme = await generateMemeImage(points, reward);
+  const isRequestText = isRequest ? "Pide" : "Regala";
+  const otherText = isRequest ? "Paga" : "Recibe";
 
   return new EmbedBuilder()
     .setColor("#6366c3")
     .setTitle("ALERTA! NUEVO OFERTA DE COMERCIO DETECTADA!")
     .setDescription("Nueva transacción de puntos detectada.")
     .addFields(
-      { name: "Vagabundo que regala", value: author.toString(), inline: true },
-      { name: "Vagabundo que recibe", value: user.toString(), inline: true }
+      { name: `Vagabundo que ${isRequestText}`, value: author.toString(), inline: true },
+      { name: `Vagabundo que ${otherText}`, value: user.toString(), inline: true }
     )
     .addFields(
       {
