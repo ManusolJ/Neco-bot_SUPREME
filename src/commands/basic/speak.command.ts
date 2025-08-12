@@ -133,6 +133,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     // Decrease the author's balance
     await necoService.decreaseAgentBalance(author.id, COST_OF_ACTION);
 
+    // Feedback to the user
+    const feedbackMsg = `¡Sonido "${sound}" enviado nya~!`;
+    await interactionService.replyEphemeral(feedbackMsg);
+
     // Set volume based on some sounds types
     switch (sound) {
       case "pipe":
@@ -150,13 +154,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       connection.destroy();
     });
 
-    // Feedback to the user
-    const feedbackMsg = `¡Sonido "${sound}" enviado nya~!`;
-    await interactionService.replyEphemeral(feedbackMsg);
-
     // Delete the reply after a certain time
     setTimeout(async () => {
-      interactionService.deleteReply();
+      await interactionService.deleteReply();
     }, TIME_FOR_REPLY_DELETE);
 
     player.on("error", (error) => {
