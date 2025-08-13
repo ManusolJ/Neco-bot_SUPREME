@@ -4,7 +4,7 @@
  * Implementation of the `/beg` slash command for Neco-arc.
  */
 
-import { ChatInputCommandInteraction, SlashCommandBuilder, User } from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, User } from "discord.js";
 import path from "path";
 
 import Agent from "@interfaces/agent.interface";
@@ -71,15 +71,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("CULTIST_ROLE environment variable missing in beg command.");
     }
 
-    //
-    const guildMember = await interaction.guild.members.fetch(author.id);
-
-    // Confirm author retrieved
-    if (!author) {
-      const errorMsg = "NYAAAHA! Hubo un problema intentado recuperar tu informacion!";
-      return await interactionService.replyError(errorMsg);
-    }
-
     // Prevent concurrent beg requests
     if (isUserLocked(author.id)) {
       const feedbackMsg = "¡Ya estas pidiendo! Espera a que termine, impaciente.";
@@ -88,11 +79,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     lockUser(author.id);
 
+    await interaction.deferReply();
+
+    const guildMember = await interaction.guild.members.fetch(author.id);
+
     // Retrieve or create the agent profile
     let agent: Agent | null = await necoService.getAgent(author.id);
     if (!agent) {
       agent = await necoService.createAgent(author.id);
     }
+
     if (!agent) {
       throw new Error("Agent creation failed");
     }
@@ -102,25 +98,35 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const feedbackMsg = `¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!`;
       const shame = agent.shame + 1;
       await necoService.setAgentShame(author.id, shame);
-      return await interactionService.replyEphemeral(feedbackMsg, [path.resolve(IMAGE_FEEDBACK)]);
+      await interactionService.followUp({
+        content: feedbackMsg,
+        files: [path.resolve(IMAGE_FEEDBACK)],
+        flags: MessageFlags.Ephemeral,
+      });
+      await interactionService.deleteReply();
+      return;
     }
 
     // Deny if user already has sufficient balance
     if (agent.balance >= LIMIT) {
       const feedbackMsg = `¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia.`;
-      return await interactionService.replyEphemeral(feedbackMsg, [path.resolve(IMAGE_FEEDBACK)]);
+      await interactionService.followUp({
+        content: feedbackMsg,
+        files: [path.resolve(IMAGE_FEEDBACK)],
+        flags: MessageFlags.Ephemeral,
+      });
+      await interactionService.deleteReply();
+      return;
     }
 
     // Determine success chance
     let success = Math.random() < 0.8;
-    let secondTry = false;
 
     // Allow cultists a second chance
     if (!success && guildMember.roles.cache.has(CULTIST_ROLE)) {
       const replyMsg = `Fallaste! Menuda skill iss- Ah, espera... Que eres uno de mis fieles. Venga, otro intento...`;
-      await interactionService.reply(replyMsg);
+      await interactionService.editReply(replyMsg);
       success = Math.random() < 0.6;
-      secondTry = true;
     }
 
     // Handle failure case
@@ -128,9 +134,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await necoService.setBeggedState(author.id, true);
       const replyMsg = randomMessageBuilder("begFail");
       const imagePath = path.resolve(IMAGE_FAIL);
-      return secondTry
-        ? await interactionService.followUp({ content: replyMsg, files: [imagePath] })
-        : await interactionService.replyWithFiles(replyMsg, [imagePath]);
+      await interactionService.followUp({ content: replyMsg, files: [imagePath] });
+      return;
     }
 
     // Handle success case
@@ -141,7 +146,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;
 
-    return secondTry ? await interactionService.followUp(replyMsg) : await interactionService.reply(replyMsg);
+    await interactionService.editReply(replyMsg);
   } catch (error) {
     console.error("Error executing beg command:", error);
   } finally {
