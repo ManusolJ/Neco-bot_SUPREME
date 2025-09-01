@@ -128,15 +128,16 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
   const data: ImageClassification = await response.json();
 
   if (data.predictions == null) {
+    const errorMsg = `Uuuh... Mira, pruebas mas tarde o avisa a Manuel. Tengo problemas recuperando informacion de la API.`;
     return {
       status: "fail",
-      message: randomMessageBuilder("monsterFail", user),
+      message: errorMsg,
     };
   }
 
   const prediction = data.predictions[0];
 
-  if (prediction == null || prediction.class == null || prediction.confidence < 0.75) {
+  if (prediction.confidence < 0.75) {
     const replyMsg = "No estoy muy seguro de que es eso... Has probado a limpiar tu camara, pedazo de guarro?";
     return {
       status: "lowConfidence",
