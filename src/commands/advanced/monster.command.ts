@@ -21,8 +21,6 @@ const REWARD = 5;
 const PUNISHMENT_ROLE = env.HERETIC_ROLE;
 const ROBOFLOW_ENDPOINT = `https://classify.roboflow.com/${env.MODEL_NAME}/${env.MODEL_VERSION}?api_key=${env.ROBOFLOW_API_KEY}`;
 const SPAIN_TIMEZONE = "Europe/Madrid";
-// Add maximum file size (5MB as example)
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 export async function execute(interaction: ChatInputCommandInteraction) {
   const necoService = await NecoService.getInstance();
@@ -46,13 +44,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       ? "NO pude conseguir tu informacion... Krill issue."
       : "NO pude conseguir la imagen que has enviado... Internet issue.";
     return await interactionService.editReply(errorMsg + reason);
-  }
-
-  // Check file size before processing
-  if (sentImage.size > MAX_FILE_SIZE) {
-    return await interactionService.editReply(
-      "¡La imagen es demasiado grande! Por favor, envía una imagen de menos de 5MB."
-    );
   }
 
   if (!sentImage.contentType?.startsWith("image/")) {
@@ -137,24 +128,7 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
   try {
     const res = await fetch(imageUrl);
 
-    // Check if image is too large before processing
-    const contentLength = res.headers.get("content-length");
-    if (contentLength && parseInt(contentLength) > MAX_FILE_SIZE) {
-      return {
-        status: "error",
-        message: "La imagen es demasiado grande. Por favor, envía una imagen de menos de 5MB.",
-      };
-    }
-
     const buffer = await res.arrayBuffer();
-
-    // Check buffer size as well
-    if (buffer.byteLength > MAX_FILE_SIZE) {
-      return {
-        status: "error",
-        message: "La imagen es demasiado grande. Por favor, envía una imagen de menos de 5MB.",
-      };
-    }
 
     const base64Data = Buffer.from(buffer).toString("base64");
 
