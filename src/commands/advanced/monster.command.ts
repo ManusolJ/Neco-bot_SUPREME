@@ -143,13 +143,6 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
     if (!response.ok) {
       console.error("Roboflow error:", response.status, response.statusText);
 
-      if (response.status === 413) {
-        return {
-          status: "error",
-          message: "La imagen es demasiado grande para procesar. Por favor, envía una imagen más pequeña.",
-        };
-      }
-
       const errorMsg = `Uuuh... Mira, pruebas mas tarde o avisa a Manuel. Mis habilidades cognitivas no funcionan ahora mismo lmao.`;
       return {
         status: "fail",
