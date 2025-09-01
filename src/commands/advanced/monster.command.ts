@@ -30,21 +30,23 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const author = interaction.user;
   const sentImage = interaction.options.getAttachment("lienzo", true);
 
+  interaction.deferReply();
+
   if (!author || !sentImage) {
     const errorMsg = `NYAAAHA! Hubo un problema intentado recuperar la informacion. Este es el motivo: `;
     const reason = !author
       ? "NO pude conseguir tu informacion... Krill issue."
       : "NO pude conseguir la imagen que has enviado... Internet issue.";
-    return await interactionService.replyError(errorMsg + reason);
+    return await interactionService.editReply(errorMsg + reason);
   }
 
   if (!sentImage.contentType?.startsWith("image/")) {
-    return interactionService.replyError("¡Eso no es una imagen!");
+    return interactionService.editReply("¡Eso no es una imagen!");
   }
 
   if (!guild) {
     const errorMsg = `NYAAAHA! Hubo un problema intentando recuperar la informacion del servidor...`;
-    return await interactionService.replyError(errorMsg);
+    return await interactionService.editReply(errorMsg);
   }
 
   let agent = await necoService.getAgent(author.id);
@@ -59,11 +61,11 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (!agent) {
     const errorMsg = "Nyahaaa! No pude obtener tu informacion de agente del caos!!! Vuelve a intentarlo!";
-    return await interactionService.replyError(errorMsg);
+    return await interactionService.editReply(errorMsg);
   }
 
   const replyMsg = `Uno de mis fieles desea mostrar su devocion con una foto de monster eh?... Veamos...`;
-  await interactionService.replyWithFiles(replyMsg, [sentImage.url]);
+  await interactionService.editReply({ content: replyMsg, files: [sentImage.url] });
 
   const result = await detectMonster(sentImage.url, author);
   const now = new Date();
