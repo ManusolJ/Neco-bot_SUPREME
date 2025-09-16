@@ -102,6 +102,9 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("Agent creation failed");
     }
 
+    // Clear the deferred reply before sending follow-up messages
+    await interactionService.deleteReply();
+
     // Deny repeated begs within the same day
     if (agent.begged) {
       const feedbackMsg = `¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!`;
