@@ -88,7 +88,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     lockUser(author.id);
 
-    await interaction.deferReply();
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const guildMember = await interaction.guild.members.fetch(author.id);
 
