@@ -4,7 +4,16 @@
  * Implementation of the `/beg` slash command for Neco-arc.
  */
 
-import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, User } from "discord.js";
+import {
+  AttachmentBuilder,
+  BitField,
+  ChatInputCommandInteraction,
+  InteractionEditReplyOptions,
+  MessageFlags,
+  MessagePayload,
+  SlashCommandBuilder,
+  User,
+} from "discord.js";
 import path from "path";
 
 import Agent from "@interfaces/agent.interface";
@@ -32,20 +41,20 @@ const CULTIST_ROLE: string = process.env.CULTIST_ROLE;
 /**
  * Paths for images used in responses.
  */
-const IMAGE_PATH = "public/img/";
-const IMAGE_FEEDBACK = path.join(IMAGE_PATH, "pilk.jpg");
-const IMAGE_FAIL = path.join(IMAGE_PATH, "fail.jpg");
+const IMAGE_PATH: string = "public/img/";
+const IMAGE_FEEDBACK: string = path.join(IMAGE_PATH, "pilk.jpg");
+const IMAGE_FAIL: string = path.join(IMAGE_PATH, "fail.jpg");
 
 /**
  * Maximum balance threshold before begging is disallowed.
  */
-const LIMIT = 50;
+const LIMIT: number = 50;
 
 /**
  * Minimum and maximum points awarded when begging.
  */
-const MINIMUM_AWARDED = 1;
-const MAXIMUM_AWARDED = 10;
+const MINIMUM_AWARDED: number = 1;
+const MAXIMUM_AWARDED: number = 10;
 
 /**
  * Handles execution of the `/beg` command.
@@ -98,25 +107,21 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       const feedbackMsg = `¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!`;
       const shame = agent.shame + 1;
       await necoService.setAgentShame(author.id, shame);
-      await interactionService.followUp({
+      return await interactionService.followUp({
         content: feedbackMsg,
         files: [path.resolve(IMAGE_FEEDBACK)],
         flags: MessageFlags.Ephemeral,
       });
-      await interactionService.deleteReply();
-      return;
     }
 
     // Deny if user already has sufficient balance
     if (agent.balance >= LIMIT) {
       const feedbackMsg = `¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia.`;
-      await interactionService.followUp({
+      return await interactionService.followUp({
         content: feedbackMsg,
         files: [path.resolve(IMAGE_FEEDBACK)],
         flags: MessageFlags.Ephemeral,
       });
-      await interactionService.deleteReply();
-      return;
     }
 
     // Determine success chance
@@ -146,7 +151,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;
 
-    await interactionService.editReply(replyMsg);
+    await interactionService.followUp(replyMsg);
   } catch (error) {
     console.error("Error executing beg command:", error);
   } finally {
