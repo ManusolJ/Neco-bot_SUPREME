@@ -139,8 +139,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       await necoService.setBeggedState(author.id, true);
       const replyMsg = randomMessageBuilder("begFail");
       const imagePath = path.resolve(IMAGE_FAIL);
-      await interactionService.followUp({ content: replyMsg, files: [imagePath] });
-      return;
+      return await interactionService.followUp({ content: replyMsg, files: [imagePath] });
     }
 
     // Handle success case
@@ -151,7 +150,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       awarded > 1 ? `${awarded} puntos.` : `1 punto lmao.`
     }`;
 
-    await interactionService.followUp(replyMsg);
+    return await interactionService.followUp(replyMsg);
   } catch (error) {
     console.error("Error executing beg command:", error);
   } finally {
