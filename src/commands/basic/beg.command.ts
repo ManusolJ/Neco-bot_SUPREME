@@ -4,16 +4,7 @@
  * Implementation of the `/beg` slash command for Neco-arc.
  */
 
-import {
-  AttachmentBuilder,
-  BitField,
-  ChatInputCommandInteraction,
-  InteractionEditReplyOptions,
-  MessageFlags,
-  MessagePayload,
-  SlashCommandBuilder,
-  User,
-} from "discord.js";
+import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, User } from "discord.js";
 import path from "path";
 
 import Agent from "@interfaces/agent.interface";
@@ -88,7 +79,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
     lockUser(author.id);
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+    await interactionService.deferReply();
 
     const guildMember = await interaction.guild.members.fetch(author.id);
 
@@ -102,28 +93,23 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       throw new Error("Agent creation failed");
     }
 
-    // Clear the deferred reply before sending follow-up messages
-    await interactionService.deleteReply();
-
     // Deny repeated begs within the same day
     if (agent.begged) {
-      const feedbackMsg = `¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia!`;
+      const feedbackMsg = `¿Otra vez pidiendo? Nyah~ ¡Eso no es muy digno del caos! Espera hasta el siguiente dia, ${author.displayName}!`;
       const shame = agent.shame + 1;
       await necoService.setAgentShame(author.id, shame);
       return await interactionService.followUp({
         content: feedbackMsg,
         files: [path.resolve(IMAGE_FEEDBACK)],
-        flags: MessageFlags.Ephemeral,
       });
     }
 
     // Deny if user already has sufficient balance
     if (agent.balance >= LIMIT) {
-      const feedbackMsg = `¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia.`;
+      const feedbackMsg = `¿¡HUH!? Tu ya tienes suficientes monedas! A pedir a la iglesia, ${author.displayName}.`;
       return await interactionService.followUp({
         content: feedbackMsg,
         files: [path.resolve(IMAGE_FEEDBACK)],
-        flags: MessageFlags.Ephemeral,
       });
     }
 

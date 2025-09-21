@@ -112,15 +112,15 @@ const altarMessages: string[] = [
 
 const begMessages: string[] = [
   `¿Pidiendo puntos, user~? Qué patético... Pero está bien, aqui tienes`,
-  `Burunyaa~ ¿De verdad has caído tan bajo como para suplicar? Toma, un ladrillo y esto de propina: `,
+  `Burunyaa~ ¿De verdad has caído tan bajo como para suplicar, user? Toma, un ladrillo y esto de propina: `,
   `Oye user, normalmente no doy limosnas, pero tu carita de abandono me ha tocado el alma. Toma tus migajas`,
   `Mira user, no me das pena, me das contenido. Aquí tienes tus puntos. Ahora baila, pequeño bufon.`,
-  `¿Otra vez pidiendo? Qué cringe... Aquí tienes. Y recuerda: el caos no se mendiga, se provoca.`,
-  `¡Nya~! Me has entretenido con tu miseria. Toma unos puntitos... pero prométeme que vas a hacer algo estúpido con ellos.`,
-  `Te pareces a un NPC rogando por monedas. Toma tus puntos y lárgate antes de que me arrepienta.`,
-  `Burunya~ tus súplicas me alimentan. Aquí tienes. Usa estos puntos con irresponsabilidad.`,
+  `¿Otra vez pidiendo, user? Qué cringe... Aquí tienes. Y recuerda: el caos no se mendiga, se provoca.`,
+  `¡Nya~! Me has entretenido con tu miseria, user. Toma unos puntitos... pero prométeme que vas a hacer algo estúpido con ellos.`,
+  `Te pareces a un NPC rogando por monedas, user. Toma tus puntos y lárgate antes de que me arrepienta.`,
+  `Burunya~ tus súplicas me alimentan, user. Aquí tienes. Usa estos puntos con irresponsabilidad.`,
   `Te doy estos puntos user, pero no porque los merezcas… sino porque estoy aburrida y necesito que hagas algo ridículo.`,
-  `Una súplica más y me transformo en Hacienda. Aquí tienes. Pero no me hables por 24 horas.`,
+  `Una súplica más y me transformo en Hacienda. Aquí tienes, user. Pero no me hables por 24 horas.`,
   `user, esto no es caridad, es inversión en caos. Toma tus puntos. No me decepciones.`,
 ];
 
