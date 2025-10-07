@@ -79,7 +79,6 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
   const subcommand = interaction.options.getSubcommand();
   const interactionService = new InteractionService(interaction);
-  interactionService.deferReply();
 
   switch (subcommand) {
     case "beg":
