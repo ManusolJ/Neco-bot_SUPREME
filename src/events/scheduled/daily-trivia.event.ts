@@ -92,19 +92,20 @@ async function scheduledTask(client: Client): Promise<void> {
       throw new Error("Invalid trivia question data.");
     }
 
+    // ! TRANSLATION DISABLED FOR NOW DUE TO API LIMITS
     // Sanitize HTML entities and translate to Spanish
-    const sanitizedQuestion = sanitizeQuestion(question);
+    // const sanitizedQuestion = sanitizeQuestion(question);
 
-    if (!sanitizedQuestion) {
-      throw new Error("Error sanitizing trivia question.");
-    }
+    // if (!sanitizedQuestion) {
+    //   throw new Error("Error sanitizing trivia question.");
+    // }
 
     // Translate question and answers
-    const translatedQuestion = await translateQuestion(sanitizedQuestion);
+    // const translatedQuestion = await translateQuestion(sanitizedQuestion);
 
-    if (!translatedQuestion) {
-      throw new Error("Error translating trivia question.");
-    }
+    // if (!translatedQuestion) {
+    //   throw new Error("Error translating trivia question.");
+    // }
 
     // Helper for timed delays
     const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -114,15 +115,15 @@ async function scheduledTask(client: Client): Promise<void> {
     await messageService.send(startMsg);
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
-    const questionType = translatedQuestion.type === "multiple" ? "opciones" : "verdadero/falso";
+    const questionType = question.type === "multiple" ? "options" : "true/false";
 
-    const difficultyDisplayLevels: Record<string, string> = {
-      easy: "facil",
-      medium: "medio",
-      hard: "dificil",
-    };
+    // const difficultyDisplayLevels: Record<string, string> = {
+    //   easy: "facil",
+    //   medium: "medio",
+    //   hard: "dificil",
+    // };
 
-    const difficultyLevel = difficultyDisplayLevels[translatedQuestion.difficulty] || "desconocido";
+    const difficultyLevel = question.difficulty || "unknown";
 
     // Announce question type and difficulty
     const questionMsg = `Veamos... Hoy voy a hacer un pregunta de trivia tipo...${questionType} y de dificultad ${difficultyLevel}.`;
@@ -130,11 +131,11 @@ async function scheduledTask(client: Client): Promise<void> {
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
     // Create poll with shuffled answers
-    const shuffledAnswers = shuffleAnswers([translatedQuestion.correctAnswer, ...translatedQuestion.incorrectAnswers]);
+    const shuffledAnswers = shuffleAnswers([question.correctAnswer, ...question.incorrectAnswers]);
 
     const pollMsg = await messageService.send({
       poll: {
-        question: { text: translatedQuestion.question },
+        question: { text: question.question },
         answers: shuffledAnswers.map((item) => ({ text: item, emoji: "" })),
         allowMultiselect: false,
         duration: 1, // 1 hour duration
@@ -158,13 +159,13 @@ async function scheduledTask(client: Client): Promise<void> {
       await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
       // Identify correct answer
-      const correct = poll.answers.find((a) => a.text === translatedQuestion.correctAnswer);
+      const correct = poll.answers.find((a) => a.text === question.correctAnswer);
       if (!correct) {
         await messageService.sendError("NYAHAAAAA! No pude encontrar la respuesta!");
         throw new Error("Correct answer not found in poll.");
       }
 
-      const correctAnswerMsg = `La respuesta correcta era: ${translatedQuestion.correctAnswer}.`;
+      const correctAnswerMsg = `La respuesta correcta era: ${question.correctAnswer}.`;
       await messageService.send(correctAnswerMsg);
 
       // Process winners and losers
@@ -172,7 +173,7 @@ async function scheduledTask(client: Client): Promise<void> {
       const winnerCount = winners.size;
 
       const loserCollections = await Promise.all(
-        poll.answers.filter((a) => a.text !== translatedQuestion.correctAnswer).map((a) => a.fetchVoters())
+        poll.answers.filter((a) => a.text !== question.correctAnswer).map((a) => a.fetchVoters())
       );
 
       const losers = loserCollections.flatMap((c) => Array.from(c.values())).filter((user) => !winners.has(user.id));
@@ -242,6 +243,7 @@ async function fetchTriviaQuestion(): Promise<TriviaREST | null> {
   }
 }
 
+// !  Translation currently disabled due to API limits
 /** Translates question and answers to Spanish */
 async function translateQuestion(question: TriviaQuestion): Promise<TriviaQuestion | null> {
   const data = new URLSearchParams();
