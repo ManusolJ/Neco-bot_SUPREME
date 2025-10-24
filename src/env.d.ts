@@ -32,6 +32,9 @@ declare global {
       TRIVIA_URL: string;
       ROBOFLOW_URL: string;
       COPYPASTA_URL: string;
+      LOSERCITY_URL: string;
+      LOSERHELL_URL: string;
+      LOSERPRISON_URL: string;
       TRANSLATION_URL: string;
 
       ROBOFLOW_API_KEY: string;
