@@ -19,20 +19,20 @@ import RedditREST from "@interfaces/reddit-rest.interface";
 // Config
 // ───────────────────────────────────────────────────────────────────────────────
 const GUILD_ID = process.env.GUILD_ID;
-const MESSAGE_CHANNEL_ID = process.env.NECO_MESSAGES_CHANNEL;
-const REDDIT_USER_AGENT = "Necobot (by u/easytoremember1111)";
 const CITY_POST_URL = process.env.LOSERCITY_URL;
 const HELL_POST_URL = process.env.LOSERHELL_URL;
 const PRISON_POST_URL = process.env.LOSERPRISON_URL;
+const REDDIT_USER_AGENT = "Necobot (by u/easytoremember1111)";
+const MESSAGE_CHANNEL_ID = process.env.NECO_MESSAGES_CHANNEL;
 
 const IMAGE_PATH = "public/img/";
 const SUCCESS_IMAGE = path.join(IMAGE_PATH, "thumbs-up.jpg");
 const FAILURE_IMAGE = path.join(IMAGE_PATH, "cursed-image.jpg");
 
 // Duration the lottery stays open (ms)
-const LOTTERY_DURATION_MS = 15 * 60 * 1000; // 6 hours
+const LOTTERY_DURATION_MS = 15 * 60 * 1000; // 15 min
 
-// Win odds per multiplier (0..1). Tweak as you like.
+// Win odds per multiplier
 const WIN_ODDS: Record<"x2" | "x3" | "x5", number> = {
   x2: 0.7,
   x3: 0.5,
@@ -73,8 +73,6 @@ export async function scheduledTask(client: Client): Promise<void> {
     if (!GUILD_ID || !MESSAGE_CHANNEL_ID) {
       throw new Error("Missing environment variables.");
     }
-
-    const necoService = NecoService.getInstance();
 
     const guild = client.guilds.cache.get(GUILD_ID);
     if (!guild) throw new Error("Guild not found.");
@@ -291,9 +289,6 @@ async function applyResults(
       );
     } catch (e) {
       console.error("Error applying winnings:", e);
-      await messageService.send(
-        `⚠️ Error aplicando la recompensa a <@${w.userId}>. Se revisará manualmente.`
-      );
     }
   }
 
@@ -311,9 +306,6 @@ async function applyResults(
       );
     } catch (e) {
       console.error("Error posting loser effect:", e);
-      await messageService.send(
-        `⚠️ Error aplicando la penalización a <@${l.userId}>. Se revisará manualmente.`
-      );
     }
   }
 }
