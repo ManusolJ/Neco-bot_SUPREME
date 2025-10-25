@@ -10,10 +10,10 @@ import {
   Guild,
   MessageFlags,
 } from "discord.js";
-import NecoService from "../../services/neco.service";
-import MessageService from "@services/message.service";
 import path from "path";
+import MessageService from "@services/message.service";
 import RedditREST from "@interfaces/reddit-rest.interface";
+import NecoService from "@services/neco.service";
 
 // ───────────────────────────────────────────────────────────────────────────────
 // Config
@@ -34,8 +34,8 @@ const LOTTERY_DURATION_MS = 15 * 60 * 1000; // 15 min
 
 // Win odds per multiplier
 const WIN_ODDS: Record<"x2" | "x3" | "x5", number> = {
-  x2: 0.7,
-  x3: 0.5,
+  x2: 0.6,
+  x3: 0.4,
   x5: 0.2,
 };
 
@@ -59,7 +59,7 @@ const LOSER_POST: Record<"x2" | "x3" | "x5", string> = {
 export default function weeklyLottery(client: Client): void {
   client.once("ready", () => {
     // Every Friday at 23:00 PM Europe/Madrid
-    cron.schedule("03 23 * * FRI", async () => scheduledTask(client), {
+    cron.schedule("0 23 * * SAT", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
@@ -75,9 +75,13 @@ export async function scheduledTask(client: Client): Promise<void> {
     }
 
     const guild = client.guilds.cache.get(GUILD_ID);
-    if (!guild) throw new Error("Guild not found.");
+
+    if (!guild) {
+      throw new Error("Guild not found.");
+    }
 
     const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
+
     if (!channel || !channel.isTextBased()) {
       throw new Error("Channel not found or not text-based.");
     }
@@ -93,7 +97,8 @@ export async function scheduledTask(client: Client): Promise<void> {
       "Elige tu multiplicador: **x2**, **x3** o **x5**.\n" +
       "Si ganas, ¡te llevarás una fortuna multiplicada!\n" +
       "Si pierdes... tendrás un destino peor que la ruina: un post directo desde **Losercity**, **Loserprison** o **Loserhell**.\n" +
-      "La ventanilla de apuestas estará abierta durante **15 minutos**.";
+      "La ventanilla de apuestas estará abierta durante **15 minutos**.\n" +
+      "-# Aviso: Necobot no se hace responsable de cualquier daño mental recibido a consecuencia del post recibido. Loserhell tiene cosas HORRIBLES!";
     await messageService.send(lotteryMsg);
 
     // Buttons
@@ -146,7 +151,7 @@ export async function scheduledTask(client: Client): Promise<void> {
           return;
         }
 
-        // Optional: reject bots
+        // Reject bots
         if (i.user.bot) {
           await i.reply({
             content: "Solo usuarios humanos pueden participar.",
@@ -216,8 +221,11 @@ export async function scheduledTask(client: Client): Promise<void> {
 
       for (const [userId, mult] of picks.entries()) {
         const won = Math.random() < WIN_ODDS[mult];
-        if (won) winners.push({ userId, multiplier: mult });
-        else losers.push({ userId, multiplier: mult });
+        if (won) {
+          winners.push({ userId, multiplier: mult });
+        } else {
+          losers.push({ userId, multiplier: mult });
+        }
       }
 
       // Apply effects

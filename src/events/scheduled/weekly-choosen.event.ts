@@ -20,7 +20,9 @@ const MESSAGE_CHANNEL_ID = process.env.NECO_MESSAGES_CHANNEL;
  */
 export default function weeklyChoosen(client: Client): void {
   client.once("ready", () => {
-    cron.schedule("0 15 * * SUN", async () => scheduledTask(client), { timezone: "Europe/Madrid" });
+    cron.schedule("0 15 * * SUN", async () => scheduledTask(client), {
+      timezone: "Europe/Madrid",
+    });
   });
 }
 
@@ -61,7 +63,8 @@ async function scheduledTask(client: Client): Promise<void> {
     await messageService.send(getRankingMessage(agents));
     await necoService.resetAllBalances();
     await necoService.resetAllBeggedStates();
-    const resetMessage = "¡Se ha reiniciado el marcador del caos! ¡A sembrar más caos!";
+    const resetMessage =
+      "¡Se ha reiniciado el marcador del caos! ¡A sembrar más caos!";
     await messageService.send(resetMessage);
     console.log("Weekly chaos reset completed.");
   } catch (error) {
