@@ -24,6 +24,11 @@ export default function interactionListener(client: Client) {
     // Only handle slash commands
     if (!interaction.isChatInputCommand()) return;
 
+    const blockedUser = "285165012887011329";
+
+    if(interaction.user.id == blockedUser) {
+      return;
+     }
     // Route to appropriate command handler
     switch (interaction.commandName) {
       case "ask":
