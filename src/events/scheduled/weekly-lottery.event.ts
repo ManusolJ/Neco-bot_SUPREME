@@ -59,7 +59,7 @@ const LOSER_POST: Record<"x2" | "x3" | "x5", string> = {
 export default function weeklyLottery(client: Client): void {
   client.once("ready", () => {
     // Every Friday at 23:00 PM Europe/Madrid
-    cron.schedule("40 0 * * SAT", async () => scheduledTask(client), {
+    cron.schedule("50 23 * * FRI", async () => scheduledTask(client), {
       timezone: "Europe/Madrid",
     });
   });
