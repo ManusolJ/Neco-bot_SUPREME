@@ -1,3 +1,8 @@
+/**
+ * @file MessageService.ts
+ * Service class for sending messages to a Discord text channel.
+ */
+
 import {
   MessageCreateOptions,
   MessagePayload,

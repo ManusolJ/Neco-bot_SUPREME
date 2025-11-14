@@ -1,3 +1,8 @@
+/**
+ * @file InteractionService.ts
+ * Centralized service for handling interaction replies.
+ */
+
 import {
   ChatInputCommandInteraction,
   AttachmentBuilder,

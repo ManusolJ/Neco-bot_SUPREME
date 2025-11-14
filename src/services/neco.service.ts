@@ -1,8 +1,13 @@
+/**
+ * @file NecoService.ts
+ * Service for managing agent records and audit logs in a PostgreSQL database.
+ */
+
 import { Pool } from "pg";
 import { getDb } from "../db";
 
-import type Agent from "@interfaces/agent.interface";
-import type AuditLog from "@interfaces/audit-log.interface";
+import type Agent from "@interfaces/db/agent.interface";
+import type AuditLog from "@interfaces/db/audit-log.interface";
 
 // Constants for table names
 const AGENT_TABLE = "agents";
