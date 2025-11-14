@@ -7,7 +7,7 @@
 import { ChatInputCommandInteraction, MessageFlags, SlashCommandBuilder, User } from "discord.js";
 import path from "path";
 
-import Agent from "@interfaces/agent.interface";
+import Agent from "@interfaces/db/agent.interface";
 import NecoService from "@services/neco.service";
 import chaosBuilder from "@utils/build-chaos.util";
 import InteractionService from "@services/interaction.service";

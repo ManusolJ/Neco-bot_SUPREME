@@ -12,7 +12,7 @@ import {
 } from "discord.js";
 import path from "path";
 import MessageService from "@services/message.service";
-import RedditREST from "@interfaces/reddit-rest.interface";
+import RedditREST from "@interfaces/rest/reddit/reddit-rest.interface";
 import NecoService from "@services/neco.service";
 
 // ───────────────────────────────────────────────────────────────────────────────
@@ -103,18 +103,9 @@ export async function scheduledTask(client: Client): Promise<void> {
 
     // Buttons
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      new ButtonBuilder()
-        .setCustomId("lottery_x2")
-        .setLabel("x2")
-        .setStyle(ButtonStyle.Success),
-      new ButtonBuilder()
-        .setCustomId("lottery_x3")
-        .setLabel("x3")
-        .setStyle(ButtonStyle.Primary),
-      new ButtonBuilder()
-        .setCustomId("lottery_x5")
-        .setLabel("x5")
-        .setStyle(ButtonStyle.Danger)
+      new ButtonBuilder().setCustomId("lottery_x2").setLabel("x2").setStyle(ButtonStyle.Success),
+      new ButtonBuilder().setCustomId("lottery_x3").setLabel("x3").setStyle(ButtonStyle.Primary),
+      new ButtonBuilder().setCustomId("lottery_x5").setLabel("x5").setStyle(ButtonStyle.Danger),
     );
 
     const choiceMsg = await messageService.send({
@@ -133,14 +124,8 @@ export async function scheduledTask(client: Client): Promise<void> {
     collector.on("collect", async (i: ButtonInteraction) => {
       try {
         const userId = i.user.id;
-        const customId = i.customId as
-          | "lottery_x2"
-          | "lottery_x3"
-          | "lottery_x5";
-        const multiplier = customId.replace("lottery_", "") as
-          | "x2"
-          | "x3"
-          | "x5";
+        const customId = i.customId as "lottery_x2" | "lottery_x3" | "lottery_x5";
+        const multiplier = customId.replace("lottery_", "") as "x2" | "x3" | "x5";
 
         // Prevent multiple selections
         if (picks.has(userId)) {
@@ -196,7 +181,7 @@ export async function scheduledTask(client: Client): Promise<void> {
           .setCustomId("lottery_x5")
           .setLabel("x5")
           .setStyle(ButtonStyle.Danger)
-          .setDisabled(true)
+          .setDisabled(true),
       );
 
       try {
@@ -208,16 +193,14 @@ export async function scheduledTask(client: Client): Promise<void> {
       // No participants case
       if (picks.size === 0) {
         await messageService.send(
-          "No hubo participantes esta semana... Vaya panda de cobardes. En fin, Krill issue."
+          "No hubo participantes esta semana... Vaya panda de cobardes. En fin, Krill issue.",
         );
         return;
       }
 
       // Resolve outcomes
-      const winners: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }> =
-        [];
-      const losers: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }> =
-        [];
+      const winners: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }> = [];
+      const losers: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }> = [];
 
       for (const [userId, mult] of picks.entries()) {
         const won = Math.random() < WIN_ODDS[mult];
@@ -245,7 +228,7 @@ export async function scheduledTask(client: Client): Promise<void> {
                       (w) =>
                         `<@${w.userId}> — **${w.multiplier.toUpperCase()}** (x${
                           MULTI_VAL[w.multiplier]
-                        })`
+                        })`,
                     )
                     .join("\n")
                 : "Nadie sobrevivió a la tirada...",
@@ -260,12 +243,12 @@ export async function scheduledTask(client: Client): Promise<void> {
                       (l) =>
                         `<@${l.userId}> — **${l.multiplier.toUpperCase()}** → ${
                           LOSER_POST[l.multiplier]
-                        }`
+                        }`,
                     )
                     .join("\n")
                 : "Nadie cayó en desgracia esta vez.",
             inline: false,
-          }
+          },
         )
         .setTimestamp(new Date())
         .setColor(0xcc0000);
@@ -281,7 +264,7 @@ async function applyResults(
   guild: Guild,
   messageService: MessageService,
   winners: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }>,
-  losers: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }>
+  losers: Array<{ userId: string; multiplier: "x2" | "x3" | "x5" }>,
 ) {
   // Apply winnings
   for (const w of winners) {
@@ -293,7 +276,7 @@ async function applyResults(
           w.userId
         }> ha ganado con **${w.multiplier.toUpperCase()}**. ¡Puntos multiplicados x${
           MULTI_VAL[w.multiplier]
-        }!`
+        }!`,
       );
     } catch (e) {
       console.error("Error applying winnings:", e);
@@ -306,11 +289,9 @@ async function applyResults(
       await applyLoser(guild, l.userId, LOSER_POST[l.multiplier]);
 
       await messageService.send(
-        `💀 <@${
-          l.userId
-        }> perdió con **${l.multiplier.toUpperCase()}**. Destino: **${
+        `💀 <@${l.userId}> perdió con **${l.multiplier.toUpperCase()}**. Destino: **${
           LOSER_POST[l.multiplier]
-        }**.`
+        }**.`,
       );
     } catch (e) {
       console.error("Error posting loser effect:", e);
@@ -328,11 +309,7 @@ async function applyWinnings(guild: Guild, userId: string, multiplier: number) {
     .getAgent(userId)
     .then((agent) => (agent ? agent.balance : 0));
   let newBalance: number = 0;
-  if (
-    actualBalance === null ||
-    actualBalance === undefined ||
-    actualBalance <= 0
-  ) {
+  if (actualBalance === null || actualBalance === undefined || actualBalance <= 0) {
     newBalance = multiplier;
   } else {
     newBalance = actualBalance * multiplier;
@@ -407,18 +384,12 @@ function extractImageUrlFromRedditData(payload: RedditREST): string {
   // 1) Direct image posts
   const direct = shuffle(posts).find((p) => {
     const url = p.url;
-    return (
-      (p.post_hint === "image" && isImageUrl(url)) ||
-      isIreddIt(url) ||
-      isImageUrl(url)
-    );
+    return (p.post_hint === "image" && isImageUrl(url)) || isIreddIt(url) || isImageUrl(url);
   });
   if (direct?.url) return unescapeHtml(direct.url);
 
   // 2) Preview image fallback
-  const withPreview = shuffle(posts).find(
-    (p) => p.preview?.images?.[0]?.source?.url
-  );
+  const withPreview = shuffle(posts).find((p) => p.preview?.images?.[0]?.source?.url);
   if (withPreview?.preview?.images?.[0]?.source?.url) {
     return unescapeHtml(withPreview.preview.images[0].source.url);
   }

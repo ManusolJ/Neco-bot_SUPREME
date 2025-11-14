@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, PermissionFlagsBits, SlashCommandBuilder } from "discord.js";
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
-import AuditLog from "@interfaces/audit-log.interface";
+import AuditLog from "@interfaces/db/audit-log.interface";
 
 export const data = new SlashCommandBuilder()
   .setName("debug")
@@ -14,14 +14,16 @@ export const data = new SlashCommandBuilder()
         option
           .setName("usuario")
           .setDescription("Elije el usuario al que quieres cambiar el estado de mendicidad.")
-          .setRequired(true)
+          .setRequired(true),
       )
       .addBooleanOption((option) =>
         option
           .setName("estado")
-          .setDescription("Elije el estado al que quieres cambiar el estado de mendicidad del usuario.")
-          .setRequired(true)
-      )
+          .setDescription(
+            "Elije el estado al que quieres cambiar el estado de mendicidad del usuario.",
+          )
+          .setRequired(true),
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -31,14 +33,16 @@ export const data = new SlashCommandBuilder()
         option
           .setName("usuario")
           .setDescription("Elije el usuario al que quieres cambiar el estado de castigo.")
-          .setRequired(true)
+          .setRequired(true),
       )
       .addBooleanOption((option) =>
         option
           .setName("estado")
-          .setDescription("Elije el estado al que quieres cambiar el estado de castigo del usuario.")
-          .setRequired(true)
-      )
+          .setDescription(
+            "Elije el estado al que quieres cambiar el estado de castigo del usuario.",
+          )
+          .setRequired(true),
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -48,14 +52,14 @@ export const data = new SlashCommandBuilder()
         user
           .setName("usuario")
           .setDescription("Elije el desafortunado vagabundo al que quieres modificar el saldo.")
-          .setRequired(true)
+          .setRequired(true),
       )
       .addIntegerOption((option) =>
         option
           .setName("puntos")
           .setDescription("Elije cuantas puntos quieres poner al schizo seleccionado.")
-          .setRequired(true)
-      )
+          .setRequired(true),
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -64,15 +68,19 @@ export const data = new SlashCommandBuilder()
       .addUserOption((option) =>
         option
           .setName("usuario")
-          .setDescription("Elije el usuario al que quieres verle la pilinga (las monedas que tiene).")
-          .setRequired(true)
+          .setDescription(
+            "Elije el usuario al que quieres verle la pilinga (las monedas que tiene).",
+          )
+          .setRequired(true),
       )
       .addBooleanOption((option) =>
         option
           .setName("oculto")
-          .setDescription("¿Quieres que los demas puedan ver la pilinga del vagabundo elegido (las monedas...)?")
-          .setRequired(false)
-      )
+          .setDescription(
+            "¿Quieres que los demas puedan ver la pilinga del vagabundo elegido (las monedas...)?",
+          )
+          .setRequired(false),
+      ),
   )
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
@@ -138,7 +146,9 @@ async function handleBegState(interaction: ChatInputCommandInteraction) {
     // Log the audit for the begging state change
     await necoService.logAudit(audit);
 
-    const replyMsg = `Ahora ${target.displayName} esta en modo mendigado: ${newState ? "ON" : "OFF"}!`;
+    const replyMsg = `Ahora ${target.displayName} esta en modo mendigado: ${
+      newState ? "ON" : "OFF"
+    }!`;
     return await interactionService.replyEphemeral(replyMsg);
   } catch (e) {
     const errorMsg = "Error in beg state handling: ";
@@ -186,7 +196,9 @@ async function handlePunishmentState(interaction: ChatInputCommandInteraction) {
     // Log the audit for the punishment state change
     await necoService.logAudit(audit);
 
-    const replyMsg = `Ahora ${target.displayName} esta en modo castigado: ${newState ? "ON" : "OFF"}!`;
+    const replyMsg = `Ahora ${target.displayName} esta en modo castigado: ${
+      newState ? "ON" : "OFF"
+    }!`;
     return await interactionService.replyEphemeral(replyMsg);
   } catch (e) {
     const errorMsg = "Error in punishment state handling: ";
@@ -264,10 +276,16 @@ export async function handleChaosInspection(interaction: ChatInputCommandInterac
 
     if (!balance) {
       const replyMsg = "Este schizo no tiene un solo punto! Le falta Pilk, vaya pringao.";
-      return hidden ? await interactionService.replyEphemeral(replyMsg) : await interactionService.reply(replyMsg);
+      return hidden
+        ? await interactionService.replyEphemeral(replyMsg)
+        : await interactionService.reply(replyMsg);
     } else {
-      const replyMsg = `Veamos, ${target} tiene...${balance > 1 ? `${balance} puntos` : "1 punto! LMAO, krill issue."}`;
-      return hidden ? await interactionService.replyEphemeral(replyMsg) : await interactionService.reply(replyMsg);
+      const replyMsg = `Veamos, ${target} tiene...${
+        balance > 1 ? `${balance} puntos` : "1 punto! LMAO, krill issue."
+      }`;
+      return hidden
+        ? await interactionService.replyEphemeral(replyMsg)
+        : await interactionService.reply(replyMsg);
     }
   } catch (e) {
     const errorMsg = "Error in chaos inspection handling: ";

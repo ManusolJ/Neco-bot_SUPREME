@@ -3,7 +3,7 @@ import cron from "node-cron";
 
 import NecoService from "@services/neco.service";
 import MessageService from "@services/message.service";
-import Agent from "@interfaces/agent.interface";
+import Agent from "@interfaces/db/agent.interface";
 
 // Environment variable for the target Discord guild ID
 const GUILD_ID = process.env.GUILD_ID;
@@ -63,8 +63,7 @@ async function scheduledTask(client: Client): Promise<void> {
     await messageService.send(getRankingMessage(agents));
     await necoService.resetAllBalances();
     await necoService.resetAllBeggedStates();
-    const resetMessage =
-      "¡Se ha reiniciado el marcador del caos! ¡A sembrar más caos!";
+    const resetMessage = "¡Se ha reiniciado el marcador del caos! ¡A sembrar más caos!";
     await messageService.send(resetMessage);
     console.log("Weekly chaos reset completed.");
   } catch (error) {

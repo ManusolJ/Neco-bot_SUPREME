@@ -5,8 +5,12 @@ import he from "he";
 import NecoService from "@services/neco.service";
 import MessageService from "@services/message.service";
 import chaosBuilder from "@utils/build-chaos.util";
-import { RawResult, TriviaQuestion, TriviaREST } from "@interfaces/trivia-rest.interface";
-import { TranslationREST } from "@interfaces/translation-rest.interface";
+import {
+  RawResult,
+  TriviaQuestion,
+  TriviaREST,
+} from "@interfaces/rest/trivia/trivia-rest.interface";
+import { TranslationREST } from "@interfaces/rest/translation/translation-rest.interface";
 
 // API configuration
 const TRIVIA_URL = process.env.TRIVIA_URL;
@@ -93,8 +97,8 @@ async function scheduledTask(client: Client): Promise<void> {
     }
 
     // ! TRANSLATION DISABLED FOR NOW DUE TO API LIMITS
-    // Sanitize HTML entities and translate to Spanish
-    // const sanitizedQuestion = sanitizeQuestion(question);
+    //Sanitize HTML entities and translate to Spanish
+    const sanitizedQuestion = sanitizeQuestion(question);
 
     // if (!sanitizedQuestion) {
     //   throw new Error("Error sanitizing trivia question.");
@@ -173,10 +177,12 @@ async function scheduledTask(client: Client): Promise<void> {
       const winnerCount = winners.size;
 
       const loserCollections = await Promise.all(
-        poll.answers.filter((a) => a.text !== question.correctAnswer).map((a) => a.fetchVoters())
+        poll.answers.filter((a) => a.text !== question.correctAnswer).map((a) => a.fetchVoters()),
       );
 
-      const losers = loserCollections.flatMap((c) => Array.from(c.values())).filter((user) => !winners.has(user.id));
+      const losers = loserCollections
+        .flatMap((c) => Array.from(c.values()))
+        .filter((user) => !winners.has(user.id));
 
       const loserCount = losers.length;
 
@@ -253,7 +259,9 @@ async function translateQuestion(question: TriviaQuestion): Promise<TriviaQuesti
   data.append("key", TRANSLATE_API_KEY);
 
   // Add all text components to translation request
-  [question.question, question.correctAnswer, ...question.incorrectAnswers].forEach((str) => data.append("q", str));
+  [question.question, question.correctAnswer, ...question.incorrectAnswers].forEach((str) =>
+    data.append("q", str),
+  );
 
   try {
     const response = await fetch(TRANSLATE_URL, {

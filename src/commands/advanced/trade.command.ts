@@ -10,7 +10,7 @@ import {
 
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
-import Meme from "@interfaces/meme.interface";
+import Meme from "@interfaces/rest/meme/meme.interface";
 import { isUserLocked, lockUser, unlockUser } from "@utils/lock-user.util";
 
 const MEME_URL = process.env.MEME_URL;
@@ -22,7 +22,9 @@ const COLLECTOR_TIME = 300000;
 
 export const data = new SlashCommandBuilder()
   .setName("trade")
-  .setDescription("Tradea puntos entre los otros vagabundos de este servidor como si fuera fentanilo.")
+  .setDescription(
+    "Tradea puntos entre los otros vagabundos de este servidor como si fuera fentanilo.",
+  )
   .addSubcommand((subcommand) =>
     subcommand
       .setName("gift")
@@ -30,8 +32,10 @@ export const data = new SlashCommandBuilder()
       .addUserOption((option) =>
         option
           .setName("usuario")
-          .setDescription("Elige el vagabundo al que quieres regalar los puntos. Seguro que le encantaran.")
-          .setRequired(true)
+          .setDescription(
+            "Elige el vagabundo al que quieres regalar los puntos. Seguro que le encantaran.",
+          )
+          .setRequired(true),
       )
       .addIntegerOption((option) =>
         option
@@ -39,22 +43,26 @@ export const data = new SlashCommandBuilder()
           .setDescription("La cantidad de puntos que le darás. Que generoso por tu parte.")
           .setRequired(true)
           .setMinValue(1)
-          .setMaxValue(20)
+          .setMaxValue(20),
       )
       .addStringOption((option) =>
         option
           .setName("razon")
-          .setDescription("La razon por la que le das los puntos. Puede ser un mensaje de amor o una amenaza.")
+          .setDescription(
+            "La razon por la que le das los puntos. Puede ser un mensaje de amor o una amenaza.",
+          )
           .setMaxLength(100)
-          .setRequired(false)
+          .setRequired(false),
       )
       .addStringOption((option) =>
         option
           .setName("recompensa")
-          .setDescription("Lo que le pides al vagabundo a cambio de los puntos. Prohibido pedir organos.")
+          .setDescription(
+            "Lo que le pides al vagabundo a cambio de los puntos. Prohibido pedir organos.",
+          )
           .setMaxLength(100)
-          .setRequired(false)
-      )
+          .setRequired(false),
+      ),
   )
   .addSubcommand((subcommand) =>
     subcommand
@@ -64,30 +72,36 @@ export const data = new SlashCommandBuilder()
         option
           .setName("usuario")
           .setDescription("El vagabundo al que rogaras de forma patetica y humillante")
-          .setRequired(true)
+          .setRequired(true),
       )
       .addIntegerOption((option) =>
         option
           .setName("puntos")
-          .setDescription("La cantidad de puntos que quieres pedir. Si no te los da, le llamaremos rata.")
+          .setDescription(
+            "La cantidad de puntos que quieres pedir. Si no te los da, le llamaremos rata.",
+          )
           .setRequired(true)
           .setMinValue(1)
-          .setMaxValue(20)
+          .setMaxValue(20),
       )
       .addStringOption((option) =>
         option
           .setName("razon")
-          .setDescription("La razon por la que le pides los puntos. Puede ser una mentira o chantaje emocional.")
+          .setDescription(
+            "La razon por la que le pides los puntos. Puede ser una mentira o chantaje emocional.",
+          )
           .setMaxLength(100)
-          .setRequired(false)
+          .setRequired(false),
       )
       .addStringOption((option) =>
         option
           .setName("recompensa")
-          .setDescription("Lo que le ofreces a cambio de los puntos. Puede ser una promesa vacia o un soborno.")
+          .setDescription(
+            "Lo que le ofreces a cambio de los puntos. Puede ser una promesa vacia o un soborno.",
+          )
           .setMaxLength(100)
-          .setRequired(false)
-      )
+          .setRequired(false),
+      ),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -117,7 +131,10 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 }
 
-async function giftPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
+async function giftPoints(
+  interaction: ChatInputCommandInteraction,
+  interactionService: InteractionService,
+) {
   const author = interaction.user;
   const necoService = await NecoService.getInstance();
   const user = interaction.options.getUser("usuario", true);
@@ -135,13 +152,14 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
     const errorMsg = "¡Me faltan datos necesarios para completar la transacción!";
     await interactionService.followUp(errorMsg);
     throw new Error(
-      `Missing required data in gift command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`
+      `Missing required data in gift command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`,
     );
   }
 
   if (author.id === user.id) {
     await punishUser(author, points);
-    const errorMsg = "¡No puedes regalarte puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
+    const errorMsg =
+      "¡No puedes regalarte puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
     return await interactionService.followUp(errorMsg);
   }
 
@@ -159,7 +177,9 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   if (!authorAgent) {
     const errorMsg = "¡No pude obtener tu informacion de agente del caos! Vuelve a intentarlo.";
     await interactionService.followUp(errorMsg);
-    throw new Error(`Author agent could not be retrieved in trade command. Author ID: ${author.id}`);
+    throw new Error(
+      `Author agent could not be retrieved in trade command. Author ID: ${author.id}`,
+    );
   }
 
   let userAgent = await necoService.getAgent(user.id);
@@ -259,7 +279,9 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
       const timeoutEmbed = new EmbedBuilder()
         .setColor("#f87171")
         .setTitle("¡Tiempo agotado!")
-        .setDescription("El tiempo para aceptar el comercio ha expirado. Los puntos no se han transferido.")
+        .setDescription(
+          "El tiempo para aceptar el comercio ha expirado. Los puntos no se han transferido.",
+        )
         .setFooter({ text: "Gracias por usar el sistema de comercio Necobot™." });
 
       await actionMessage.edit({ embeds: [timeoutEmbed], components: [] });
@@ -267,12 +289,17 @@ async function giftPoints(interaction: ChatInputCommandInteraction, interactionS
   });
 }
 
-async function requestPoints(interaction: ChatInputCommandInteraction, interactionService: InteractionService) {
+async function requestPoints(
+  interaction: ChatInputCommandInteraction,
+  interactionService: InteractionService,
+) {
   const necoService = await NecoService.getInstance();
   const author = interaction.user;
   const user = interaction.options.getUser("usuario", true);
   const points = interaction.options.getInteger("puntos", true);
-  const reason = interaction.options.getString("razon") || "Solo soy un pobre vagabundo goblino pidiendo puntos.";
+  const reason =
+    interaction.options.getString("razon") ||
+    "Solo soy un pobre vagabundo goblino pidiendo puntos.";
   const reward = interaction.options.getString("recompensa") || "Nada, soy insolvente.";
 
   if (!points || points < 1 || points > 20) {
@@ -285,13 +312,14 @@ async function requestPoints(interaction: ChatInputCommandInteraction, interacti
     const errorMsg = "¡Me faltan datos necesarios para completar la transacción!";
     await interactionService.followUp(errorMsg);
     throw new Error(
-      `Missing required data in request command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`
+      `Missing required data in request command: author: ${author}, user: ${user}, reason: ${reason}, reward: ${reward}`,
     );
   }
 
   if (author.id === user.id) {
     await punishUser(author, points);
-    const errorMsg = "¡No puedes pedir puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
+    const errorMsg =
+      "¡No puedes pedir puntos a ti mismo! Seras imbecil! Ahora te quito los puntos.";
     return await interactionService.followUp(errorMsg);
   }
 
@@ -314,7 +342,9 @@ async function requestPoints(interaction: ChatInputCommandInteraction, interacti
   if (!authorAgent || !userAgent) {
     const errorMsg = "¡No pude obtener la informacion de los agentes! Vuelve a intentarlo.";
     await interactionService.followUp(errorMsg);
-    throw new Error(`Agents could not be retrieved in request command. Author ID: ${author.id}, User ID: ${user.id}`);
+    throw new Error(
+      `Agents could not be retrieved in request command. Author ID: ${author.id}, User ID: ${user.id}`,
+    );
   }
 
   const isRequest = true;
@@ -396,7 +426,9 @@ async function requestPoints(interaction: ChatInputCommandInteraction, interacti
       const timeoutEmbed = new EmbedBuilder()
         .setColor("#f87171")
         .setTitle("¡Tiempo agotado!")
-        .setDescription("El tiempo para aceptar el comercio ha expirado. Los puntos no se han transferido.")
+        .setDescription(
+          "El tiempo para aceptar el comercio ha expirado. Los puntos no se han transferido.",
+        )
         .setFooter({ text: "Gracias por usar el sistema de comercio Necobot™." });
 
       await actionMessage.edit({ embeds: [timeoutEmbed], components: [] });
@@ -427,7 +459,7 @@ async function getTradeEmbed(
   points: number,
   reason: string,
   reward: string,
-  isRequest: boolean = false
+  isRequest: boolean = false,
 ) {
   const meme = await generateMemeImage(points, reward, isRequest);
   const isRequestText = isRequest ? "Pide" : "Regala";
@@ -439,7 +471,7 @@ async function getTradeEmbed(
     .setDescription("Nueva transacción de puntos detectada.")
     .addFields(
       { name: `Vagabundo que ${isRequestText}`, value: author.toString(), inline: true },
-      { name: `Vagabundo que ${otherText}`, value: user.toString(), inline: true }
+      { name: `Vagabundo que ${otherText}`, value: user.toString(), inline: true },
     )
     .addFields(
       {
@@ -451,12 +483,16 @@ async function getTradeEmbed(
         name: "Razon de la transacción",
         value: reason,
         inline: true,
-      }
+      },
     )
     .setImage(meme);
 }
 
-async function generateMemeImage(points: number, reward: string, isRequest: boolean): Promise<string> {
+async function generateMemeImage(
+  points: number,
+  reward: string,
+  isRequest: boolean,
+): Promise<string> {
   const flavorText = points > 1 ? "puntos" : "punto";
 
   const boxes = [

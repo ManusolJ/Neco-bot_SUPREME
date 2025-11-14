@@ -1,20 +1,22 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder, User } from "discord.js";
 import { env } from "process";
 
-import ImageClassification from "@interfaces/image-classification.interface";
-import DetectionResponse from "@interfaces/detection-response.interface";
+import ImageClassification from "@interfaces/rest/image-detection/image-classification.interface";
+import DetectionResponse from "@interfaces/rest/image-detection/detection-response.interface";
 import InteractionService from "@services/interaction.service";
 import NecoService from "@services/neco.service";
 import randomMessageBuilder from "@utils/build-random-message.util";
 
 export const data = new SlashCommandBuilder()
   .setName("monster-time")
-  .setDescription("Presume tu Monster Energy y demuestra tu lealtad al culto… o enfréntate al exilio.")
+  .setDescription(
+    "Presume tu Monster Energy y demuestra tu lealtad al culto… o enfréntate al exilio.",
+  )
   .addAttachmentOption((option) =>
     option
       .setName("lienzo")
       .setDescription("Carga la obra maestra líquida con la probaras tu devocion.")
-      .setRequired(true)
+      .setRequired(true),
   );
 
 const REWARD = 5;
@@ -59,14 +61,17 @@ export async function execute(interaction: ChatInputCommandInteraction) {
 
   if (!agent) {
     try {
-      (await necoService.createAgent(author.id)) ? (agent = await necoService.getAgent(author.id)) : (agent = null);
+      (await necoService.createAgent(author.id))
+        ? (agent = await necoService.getAgent(author.id))
+        : (agent = null);
     } catch (e) {
       console.error("Error en creacion de un agente del chaos! Este es el error: ", e);
     }
   }
 
   if (!agent) {
-    const errorMsg = "Nyahaaa! No pude obtener tu informacion de agente del caos!!! Vuelve a intentarlo!";
+    const errorMsg =
+      "Nyahaaa! No pude obtener tu informacion de agente del caos!!! Vuelve a intentarlo!";
     return await interactionService.editReply(errorMsg);
   }
 
@@ -94,7 +99,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             }
           }
           return await interactionService.followUp(
-            "Fantástico Monster, pero hoy no es viernes… Tu herejía será marcada."
+            "Fantástico Monster, pero hoy no es viernes… Tu herejía será marcada.",
           );
         }
 
@@ -106,7 +111,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
           return await interactionService.followUp(result.message);
         } else {
           return await interactionService.followUp(
-            "Ni Monster ni viernes… ¿Qué clase de blasfemia es esta? A la proxima te desintegro."
+            "Ni Monster ni viernes… ¿Qué clase de blasfemia es esta? A la proxima te desintegro.",
           );
         }
 
@@ -114,12 +119,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         return await interactionService.followUp(result.message);
 
       default:
-        return await interactionService.followUp("Algo insólito ha ocurrido. Ni el caos lo predijo.");
+        return await interactionService.followUp(
+          "Algo insólito ha ocurrido. Ni el caos lo predijo.",
+        );
     }
   } catch (error) {
     console.error("Error in monster detection:", error);
     return await interactionService.editReply(
-      "¡Ocurrió un error procesando tu imagen! Por favor, intenta con una imagen más pequeña o más tarde."
+      "¡Ocurrió un error procesando tu imagen! Por favor, intenta con una imagen más pequeña o más tarde.",
     );
   }
 }
@@ -163,7 +170,8 @@ async function detectMonster(imageUrl: string, user: User): Promise<DetectionRes
     const prediction = data.predictions[0];
 
     if (prediction.confidence < 0.75) {
-      const replyMsg = "No estoy muy seguro de que es eso... Has probado a limpiar tu camara, pedazo de guarro?";
+      const replyMsg =
+        "No estoy muy seguro de que es eso... Has probado a limpiar tu camara, pedazo de guarro?";
       return {
         status: "lowConfidence",
         message: replyMsg,
