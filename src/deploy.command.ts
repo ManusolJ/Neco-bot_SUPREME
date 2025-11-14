@@ -70,7 +70,12 @@ for (const file of commandFiles) {
       console.log(green(`[COMMAND] Loaded: ${path.relative(commandsPath, file)}`));
     } else {
       console.warn(
-        yellow(`[WARNING] The command at ${path.relative(commandsPath, file)} is missing "data" or "execute"`)
+        yellow(
+          `[WARNING] The command at ${path.relative(
+            commandsPath,
+            file,
+          )} is missing "data" or "execute"`,
+        ),
       );
     }
   } catch (err) {
@@ -143,7 +148,7 @@ async function getAllCommandFiles(dir: string): Promise<string[]> {
         return [fullPath];
       }
       return [];
-    })
+    }),
   );
 
   return files.flat();
