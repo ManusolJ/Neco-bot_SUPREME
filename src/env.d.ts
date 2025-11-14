@@ -3,8 +3,10 @@ declare global {
     interface ProcessEnv {
       BOT_TOKEN: string;
       CLIENT_ID: string;
-      GUILD_REVO_ID: string;
+
       GUILD_ID: string;
+      GUILD_REVO_ID: string;
+
       DB_HOST: string;
       DB_USER: string;
       DB_PASSWORD: string;
@@ -36,6 +38,7 @@ declare global {
       LOSERHELL_URL: string;
       LOSERPRISON_URL: string;
       TRANSLATION_URL: string;
+      WEATHER_API_URL: string;
 
       ROBOFLOW_API_KEY: string;
       TRANSLATION_API_KEY: string;
@@ -44,8 +47,6 @@ declare global {
       MODEL_VERSION: string;
 
       MEME_TEMPLATE_ID: string;
-
-      USER_JAN: string;
     }
   }
 }
