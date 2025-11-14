@@ -7,7 +7,7 @@ import { Client } from "discord.js";
 import { readdir } from "fs/promises";
 import { pathToFileURL, fileURLToPath } from "url";
 import path from "path";
-import EventModule from "@interfaces/event-module.interface";
+import EventModule from "@interfaces/rest/file-config/event-module.interface";
 
 /** @private Absolute path of this source file. */
 const __filename = fileURLToPath(import.meta.url);
@@ -39,7 +39,10 @@ async function loadAllEvents(client: Client): Promise<void> {
       const fullPath = path.join(dir, entry.name);
       if (entry.isDirectory()) {
         await walk(fullPath);
-      } else if (entry.isFile() && (entry.name.endsWith(".event.ts") || entry.name.endsWith(".event.js"))) {
+      } else if (
+        entry.isFile() &&
+        (entry.name.endsWith(".event.ts") || entry.name.endsWith(".event.js"))
+      ) {
         try {
           const fileUrl = pathToFileURL(fullPath).href;
           const module: EventModule = await import(fileUrl);
