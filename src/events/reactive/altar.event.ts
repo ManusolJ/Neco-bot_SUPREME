@@ -1,5 +1,9 @@
-import { Client, Events, Message, OmitPartialGroupDMChannel } from "discord.js";
+/**
+ * @file Handles the altar event, rewarding users for posting media in a specific channel.
+ */
+
 import { env } from "process";
+import { Client, Events, Message, OmitPartialGroupDMChannel } from "discord.js";
 
 import NecoService from "@services/neco.service";
 import chaosBuilder from "@utils/build-chaos.util";
@@ -48,7 +52,8 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
 
     // Validate that message has a guild context and a non‐bot author
     if (!guild || !author) {
-      throw new Error("Invalid message source: missing guild or author");
+      const err = "Invalid message source: missing guild or author";
+      throw new Error(err);
     }
 
     if (author.bot) {
@@ -65,7 +70,8 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
     // Ensure the channel is text‐based before replying
     const channel = guild.channels.cache.get(message.channel.id);
     if (!channel || !channel.isTextBased()) {
-      throw new Error("Invalid channel type: must be text‐based");
+      const err = "Invalid channel type: must be text‐based";
+      throw new Error(err);
     }
     const messageService = new MessageService(channel);
 
@@ -76,7 +82,8 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
     // Generate and send a contextual reply, then react to the original message
     const reply = randomMessageBuilder(MESSAGE_CASE, author);
     if (!reply) {
-      throw new Error("Failed to generate random message for altar event");
+      const err = "Failed to generate random message for altar event";
+      throw new Error(err);
     }
     await messageService.send(reply);
     await reactionBuilder(message);

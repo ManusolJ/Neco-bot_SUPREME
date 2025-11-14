@@ -1,8 +1,13 @@
-import { Client, Events, VoiceState } from "discord.js";
+/**
+ * @file Handles the chair event, managing user interactions with the "funny chair" voice channel.
+ */
+
 import { env } from "process";
+import { Client, Events, VoiceState } from "discord.js";
 
 import NecoService from "@services/neco.service";
 import MessageService from "@services/message.service";
+import Agent from "@interfaces/db/agent.interface";
 
 // Environment variable values for guild and channels
 const GUILD_ID = env.GUILD_ID;
@@ -35,11 +40,22 @@ export default function chairEvent(client: Client): void {
  * @param oldState - The user's previous voice state.
  * @param newState - The user's current voice state.
  */
-async function eventHandler(client: Client, oldState: VoiceState, newState: VoiceState): Promise<void> {
+async function eventHandler(
+  client: Client,
+  oldState: VoiceState,
+  newState: VoiceState,
+): Promise<void> {
   try {
     // Validate presence of all required environment variables
-    if (!GUILD_ID || !NECO_MESSAGES_CHANNEL_ID || !MAIN_VOICE_CHANNEL_ID || !FUNNY_CHAIR_CHANNEL_ID || !FUNNY_ROLE_ID) {
-      throw new Error("Missing required environment variables for chair event");
+    if (
+      !GUILD_ID ||
+      !NECO_MESSAGES_CHANNEL_ID ||
+      !MAIN_VOICE_CHANNEL_ID ||
+      !FUNNY_CHAIR_CHANNEL_ID ||
+      !FUNNY_ROLE_ID
+    ) {
+      const err = "Missing required environment variables for chair event";
+      throw new Error(err);
     }
 
     const necoService = await NecoService.getInstance();
@@ -47,7 +63,8 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     // Resolve the guild context
     const guild = oldState.guild ?? newState.guild ?? client.guilds.cache.get(GUILD_ID);
     if (!guild) {
-      throw new Error("Failed to resolve guild from voice state.");
+      const err = "Failed to resolve guild from voice state.";
+      throw new Error(err);
     }
 
     // Retrieve the main voice channel, chair voice channel, and message channel
@@ -56,19 +73,16 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     const messageChannel = guild.channels.cache.get(NECO_MESSAGES_CHANNEL_ID);
 
     if (!mainChannel || !chairChannel || !messageChannel) {
-      console.log(mainChannel, chairChannel, messageChannel);
-      throw new Error("Failed to resolve one or more required channels.");
+      const err = "Failed to resolve one or more required channels.";
+      throw new Error(err);
     }
 
-    // Confirm appropriate channel types
-    if (!mainChannel.isVoiceBased()) {
-      throw new Error("Main channel is not voice-based");
-    }
-    if (!chairChannel.isVoiceBased()) {
-      throw new Error("Chair channel is not voice-based");
-    }
-    if (!messageChannel.isTextBased()) {
-      throw new Error("Message channel is not text-based");
+    const channelsAreValid =
+      mainChannel.isVoiceBased() && chairChannel.isVoiceBased() && messageChannel.isTextBased();
+
+    if (!channelsAreValid) {
+      const err = "One or more channels have invalid types.";
+      throw new Error(err);
     }
 
     const messageService = new MessageService(messageChannel);
@@ -76,7 +90,8 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     // Resolve the punishment role from guild
     const funnyRole = guild.roles.cache.get(FUNNY_ROLE_ID);
     if (!funnyRole) {
-      throw new Error("Punishment role not found in guild");
+      const err = "Punishment role not found in guild";
+      throw new Error(err);
     }
 
     // Determine whether the user joined or left the chair channel
@@ -86,16 +101,21 @@ async function eventHandler(client: Client, oldState: VoiceState, newState: Voic
     // Identify the target guild member
     const target = newState.member ?? oldState.member;
     if (!target) {
-      throw new Error("Failed to resolve target member from voice state");
+      const err = "Failed to resolve target member from voice state";
+      throw new Error(err);
     }
 
     // Ensure the agent exists in the database
-    let agent = await necoService.getAgent(target.id);
-    if (!agent) {
+    let agent: Agent | null;
+    if (await necoService.agentExists(target.id)) {
+      agent = await necoService.getAgent(target.id);
+    } else {
       agent = await necoService.createAgent(target.id);
     }
+
     if (!agent) {
-      throw new Error(`Agent not found for user ${target.id}`);
+      const err = `Agent not found for user ${target.id}, and creation failed.`;
+      throw new Error(err);
     }
 
     // Handle user sitting in the chair (notification only)

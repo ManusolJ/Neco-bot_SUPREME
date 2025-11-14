@@ -1,6 +1,6 @@
-import { Client, Events } from "discord.js";
-import { env } from "process";
 import cron from "node-cron";
+import { env } from "process";
+import { Client, Events } from "discord.js";
 
 import MessageService from "@services/message.service";
 import { WeatherREST } from "@interfaces/rest/weather/weather-rest.interface";

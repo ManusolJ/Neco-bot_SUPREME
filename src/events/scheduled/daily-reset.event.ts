@@ -1,7 +1,11 @@
-import type { Client } from "discord.js";
 import cron from "node-cron";
+import { Events, type Client } from "discord.js";
 
 import NecoService from "@services/neco.service";
+
+// Task Constants
+const SCHEDULED_TIME = "0 12 * * *";
+const TIMEZONE = "Europe/Madrid";
 
 /**
  * Scheduled daily reset for begging cooldowns
@@ -13,9 +17,9 @@ import NecoService from "@services/neco.service";
  */
 export default function dailyBeg(client: Client): void {
   // Schedule daily at 12:00 PM Madrid time
-  client.once("ready", () => {
-    cron.schedule("0 12 * * *", async () => scheduledTask(), {
-      timezone: "Europe/Madrid",
+  client.once(Events.ClientReady, () => {
+    cron.schedule(SCHEDULED_TIME, async () => scheduledTask(), {
+      timezone: TIMEZONE,
     });
   });
 }

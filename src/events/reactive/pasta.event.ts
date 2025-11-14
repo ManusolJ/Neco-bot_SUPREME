@@ -6,8 +6,15 @@ import chaosBuilder from "@utils/build-chaos.util";
 import reactionBuilder from "@utils/build-reaction.util";
 import randomMessageBuilder from "@utils/build-random-message.util";
 
+// Bounds for the random points awarded per qualifying post
 const MINIMUN_REWARD = 1;
 const MAXIMUM_REWARD = 5;
+
+// Prefix that identifies a copypasta message
+const PREFIX = "Pasta:";
+
+// Key passed to the random message generator to select the appropriate pool
+const MESSAGE_CASE = "copypasta";
 
 /**
  * Event handler for copypasta channel
@@ -31,12 +38,13 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
   if (author.bot || !guild) return;
 
   // Validate message format
-  const isPasta = message.content.startsWith("Pasta:");
+  const isPasta = message.content.startsWith(PREFIX);
   if (!isPasta) return;
 
   // Validate text channel
   const channel = guild.channels.cache.get(message.channel.id);
-  if (!channel?.isTextBased()) return;
+  const isChannelValid = channel && channel.isTextBased();
+  if (!isChannelValid) return;
 
   const msgService = new MessageService(channel);
 
@@ -46,7 +54,7 @@ async function eventHandler(message: OmitPartialGroupDMChannel<Message<boolean>>
   await necoService.increaseAgentBalance(author.id, reward);
 
   // Generate random response
-  const msg = randomMessageBuilder("copypasta", author);
+  const msg = randomMessageBuilder(MESSAGE_CASE, author);
   if (!msg) return;
 
   // Send response and add reaction

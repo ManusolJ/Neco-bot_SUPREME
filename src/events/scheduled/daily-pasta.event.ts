@@ -1,15 +1,19 @@
-import { Client } from "discord.js";
-import { env } from "process";
 import cron from "node-cron";
+import { env } from "process";
+import { Client, Events } from "discord.js";
 
 import MessageService from "@services/message.service";
-import RedditREST from "@interfaces/reddit-rest.interface";
+import RedditREST from "@interfaces/rest/reddit/reddit-rest.interface";
 
 // Environment variable keys for Discord guild, copypasta source URL, and channel
 const GUILD_ID = env.GUILD_ID;
 const COPY_URL = env.COPYPASTA_URL;
 const COPY_CHANNEL_ID = env.COPYPASTA_CHANNEL;
 const REDDIT_USER_AGENT = "Necobot (by u/easytoremember1111)";
+
+// Task Constants
+const SCHEDULED_TIME = "0 22 * * *";
+const TIMEZONE = "Europe/Madrid";
 
 /**
  * Schedules a daily copypasta post in a Discord guild.
@@ -22,8 +26,10 @@ const REDDIT_USER_AGENT = "Necobot (by u/easytoremember1111)";
  * @param client - The Discord.js Client instance used to access guilds and channels.
  */
 export default function dailyPasta(client: Client): void {
-  client.once("ready", () => {
-    cron.schedule("0 22 * * *", async () => scheduledTask(client), { timezone: "Europe/Madrid" });
+  client.once(Events.ClientReady, () => {
+    cron.schedule(SCHEDULED_TIME, async () => scheduledTask(client), {
+      timezone: TIMEZONE,
+    });
   });
 }
 
@@ -37,17 +43,20 @@ export default function dailyPasta(client: Client): void {
 async function scheduledTask(client: Client): Promise<void> {
   try {
     if (!GUILD_ID || !COPY_CHANNEL_ID || !COPY_URL) {
-      throw new Error("Missing environment variables for guild, channel or URL");
+      const err = "Missing environment variables for guild, channel or URL";
+      throw new Error(err);
     }
 
     const guild = client.guilds.cache.get(GUILD_ID);
     if (!guild) {
-      throw new Error("Guild retrieval failed");
+      const err = `Guild with ID ${GUILD_ID} not found`;
+      throw new Error(err);
     }
 
     const channel = guild.channels.cache.get(COPY_CHANNEL_ID);
     if (!channel || !channel.isTextBased()) {
-      throw new Error("Invalid message channel or not text-based");
+      const err = `Channel with ID ${COPY_CHANNEL_ID} not found or not text-based`;
+      throw new Error(err);
     }
 
     const messageService = new MessageService(channel);
@@ -104,7 +113,7 @@ async function scheduledTask(client: Client): Promise<void> {
 function getPastaFromData(data: RedditREST): string {
   // Filter posts that have non-empty selftext under Discord's character limit
   const validPosts = data.data.children.filter(
-    (post) => post.data.selftext?.length > 0 && post.data.selftext.length < 2000
+    (post) => post.data.selftext?.length > 0 && post.data.selftext.length < 2000,
   );
 
   if (validPosts.length === 0) {

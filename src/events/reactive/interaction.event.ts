@@ -1,4 +1,8 @@
-import { Client, Events } from "discord.js";
+/**
+ * @file Central interaction event handler, routing slash commands to their respective executors.
+ */
+
+import { Client, Events, Interaction } from "discord.js";
 
 // Command handlers
 import { execute as ask } from "@commands/basic/ask.command";
@@ -19,51 +23,51 @@ import { execute as debug } from "@commands/advanced/debug.command";
  *
  * @param client Discord.js Client instance
  */
-export default function interactionListener(client: Client) {
+
+export default function interactionListener(client: Client): void {
   client.on(Events.InteractionCreate, async (interaction) => {
-    // Only handle slash commands
-    if (!interaction.isChatInputCommand()) return;
-
-    const blockedUser = "285165012887011329";
-
-    if(interaction.user.id == blockedUser) {
-      return;
-     }
-    // Route to appropriate command handler
-    switch (interaction.commandName) {
-      case "ask":
-        await ask(interaction);
-        break;
-      case "beg":
-        await beg(interaction);
-        break;
-      case "chaos-info":
-        await info(interaction);
-        break;
-      case "speak":
-        await speak(interaction);
-        break;
-      case "slap":
-        await slap(interaction);
-        break;
-      case "cheer":
-        await cheer(interaction);
-        break;
-      case "timer":
-        await timer(interaction);
-        break;
-      case "zaza":
-        await zaza(interaction);
-        break;
-      case "monster-time":
-        await monster(interaction);
-        break;
-      case "trade":
-        await trade(interaction);
-        break;
-      case "debug":
-        await debug(interaction);
-        break;
-    }
+    await eventHandler(interaction);
   });
+}
+
+async function eventHandler(interaction: Interaction) {
+  // Only handle slash commands
+  if (!interaction.isChatInputCommand()) return;
+
+  // Route to appropriate command handler
+  switch (interaction.commandName) {
+    case "ask":
+      await ask(interaction);
+      break;
+    case "beg":
+      await beg(interaction);
+      break;
+    case "chaos-info":
+      await info(interaction);
+      break;
+    case "speak":
+      await speak(interaction);
+      break;
+    case "slap":
+      await slap(interaction);
+      break;
+    case "cheer":
+      await cheer(interaction);
+      break;
+    case "timer":
+      await timer(interaction);
+      break;
+    case "zaza":
+      await zaza(interaction);
+      break;
+    case "monster-time":
+      await monster(interaction);
+      break;
+    case "trade":
+      await trade(interaction);
+      break;
+    case "debug":
+      await debug(interaction);
+      break;
+  }
 }
