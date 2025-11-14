@@ -119,7 +119,7 @@ async function scheduledTask(client: Client): Promise<void> {
     await messageService.send(startMsg);
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
-    const questionType = question.type === "multiple" ? "options" : "true/false";
+    const questionType = sanitizedQuestion.type === "multiple" ? "options" : "true/false";
 
     // const difficultyDisplayLevels: Record<string, string> = {
     //   easy: "facil",
@@ -127,7 +127,7 @@ async function scheduledTask(client: Client): Promise<void> {
     //   hard: "dificil",
     // };
 
-    const difficultyLevel = question.difficulty || "unknown";
+    const difficultyLevel = sanitizedQuestion.difficulty || "unknown";
 
     // Announce question type and difficulty
     const questionMsg = `Veamos... Hoy voy a hacer un pregunta de trivia tipo...${questionType} y de dificultad ${difficultyLevel}.`;
@@ -135,11 +135,14 @@ async function scheduledTask(client: Client): Promise<void> {
     await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
     // Create poll with shuffled answers
-    const shuffledAnswers = shuffleAnswers([question.correctAnswer, ...question.incorrectAnswers]);
+    const shuffledAnswers = shuffleAnswers([
+      sanitizedQuestion.correctAnswer,
+      ...sanitizedQuestion.incorrectAnswers,
+    ]);
 
     const pollMsg = await messageService.send({
       poll: {
-        question: { text: question.question },
+        question: { text: sanitizedQuestion.question },
         answers: shuffledAnswers.map((item) => ({ text: item, emoji: "" })),
         allowMultiselect: false,
         duration: 1, // 1 hour duration
@@ -163,13 +166,13 @@ async function scheduledTask(client: Client): Promise<void> {
       await delay(WAIT_TIME_BETWEEN_MESSAGES);
 
       // Identify correct answer
-      const correct = poll.answers.find((a) => a.text === question.correctAnswer);
+      const correct = poll.answers.find((a) => a.text === sanitizedQuestion.correctAnswer);
       if (!correct) {
         await messageService.sendError("NYAHAAAAA! No pude encontrar la respuesta!");
         throw new Error("Correct answer not found in poll.");
       }
 
-      const correctAnswerMsg = `La respuesta correcta era: ${question.correctAnswer}.`;
+      const correctAnswerMsg = `La respuesta correcta era: ${sanitizedQuestion.correctAnswer}.`;
       await messageService.send(correctAnswerMsg);
 
       // Process winners and losers
