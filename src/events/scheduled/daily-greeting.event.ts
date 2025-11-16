@@ -18,7 +18,7 @@ const ALICANTE_COORDINATES: { latitude: number; longitude: number } = {
 };
 const FORECAST_DAYS: number = 1;
 const DAILY_REQUESTED_PARAMS: string[] = [
-  "weathercode",
+  "weather_code",
   "temperature_2m_max",
   "temperature_2m_min",
   "precipitation_probability_max",
