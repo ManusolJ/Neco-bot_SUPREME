@@ -18,8 +18,10 @@ export const data = new SlashCommandBuilder()
   .addUserOption((option) =>
     option
       .setName("usuario")
-      .setDescription("La persona a las que vas a golpear las bolas. Si es Jan, puede que haya recompensa...")
-      .setRequired(true)
+      .setDescription(
+        "La persona a las que vas a golpear las bolas. Si es Jan, puede que haya recompensa...",
+      )
+      .setRequired(true),
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -62,36 +64,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return await interactionService.replyEphemeral(feedbackMsg, [image]);
   }
 
-  let success;
-
-  try {
-    const jan = process.env.USER_JAN;
-
-    // If the target is Jan, chance for the slap to be free
-    if (jan) {
-      const targetIsJan = target.id === jan;
-
-      if (targetIsJan) {
-        success = Math.random() > 0.5;
-      }
-      if (success) {
-        const replyMsg = `¡Vaya! Con que alguien quiere slapear las bolas de Jan... Pues venga, esta es gratis. Pero no te acostumbres`;
-        await interactionService.reply(replyMsg);
-      }
-    }
-
-    if (!success) {
-      await necoService.decreaseAgentBalance(author.id, COST_OF_ACTION);
-    }
-  } catch (e) {
-    const errorMsg = "EH?! No pude controlar el caos! Este es el problema: ";
-    console.error(errorMsg, e);
-    return await interactionService.replyError(errorMsg);
-  }
-
   const replyMsg = `Wow ${target}! Nice balls, bro!`;
   const image = path.resolve(IMAGE_SLAP);
-  return success
-    ? await interactionService.followUp({ content: replyMsg, files: [image] })
-    : await interactionService.replyWithFiles(replyMsg, [image]);
+  return interactionService.replyWithFiles(replyMsg, [image]);
 }
