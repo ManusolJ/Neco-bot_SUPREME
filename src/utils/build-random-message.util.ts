@@ -178,7 +178,6 @@ const monsterSuccessMessages: string[] = [
   "Aplausos para user: unos de mis mas devotos... devotos. Uh, si lo que sea.",
   "¡Éxito! user, puedo oler el dulce, dulce olor de... quimicos con cafeina. Disfruta tus puntos.",
   "Que buen monstruo tienes ahi, user. Y la lata de bebida energetica tambien es bien adecuada.",
-  "Vaya! Que buen monstruo tienes ahi, pillin... Has demonstrado tu devocion por las tradiciones, asi que te regalo unos cuantos puntos. No te lo gastes todo slapeando las bolas de jan",
 ];
 
 const monsterFailMessages: string[] = [
