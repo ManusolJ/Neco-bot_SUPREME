@@ -133,6 +133,16 @@ async function fetchWeatherData(): Promise<WeatherREST> {
 
   const data: WeatherREST = await response.json();
 
+  if (!data || !data.daily) {
+    const err = `Weather data is empty or invalid`;
+    throw new Error(err);
+  }
+
+  if (!validateWeatherData(data)) {
+    const err = `Weather data is missing required daily properties`;
+    throw new Error(err);
+  }
+
   return data;
 }
 
@@ -151,9 +161,25 @@ function buildWeatherMessage(weatherData: WeatherREST): string {
   - Temperatura Máxima: ${rawWeatherData.maxTemperature}°C
   - Temperatura Mínima: ${rawWeatherData.minTemperature}°C
   - Probabilidad de LLuvia: ${rawWeatherData.precipitationProbability}%
+  -# Quieres saber el clima de otra ciudad? Sugierelo para añadirlo!
   `;
 
   return weatherMessage;
+}
+
+function validateWeatherData(data: WeatherREST): boolean {
+  const requiredProps = [
+    "time",
+    "weather_code",
+    "temperature_2m_max",
+    "temperature_2m_min",
+    "precipitation_probability_max",
+  ];
+
+  return requiredProps.every((prop) => {
+    const array = data.daily[prop as keyof typeof data.daily];
+    return Array.isArray(array) && array.length > 0;
+  });
 }
 
 /**
