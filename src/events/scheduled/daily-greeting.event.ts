@@ -1,21 +1,27 @@
 import cron from "node-cron";
 import { env } from "process";
-import { Client, Events } from "discord.js";
+import { Client, Events, Guild, GuildBasedChannel } from "discord.js";
 
 import MessageService from "@services/message.service";
-import { WeatherREST } from "@interfaces/rest/weather/weather-rest.interface";
-import { RawWeatherData } from "@interfaces/rest/weather/weather.interface";
+import WeatherREST from "@interfaces/rest/weather/weather-rest.interface";
+import WeatherReport from "@interfaces/rest/weather/weather-report.inteface";
+import WeatherCoordinates from "@interfaces/rest/weather/weather-coordinates.interface";
 
 // Environment Variables
 const GUILD_ID: string = env.GUILD_ID;
 const MESSAGE_CHANNEL_ID: string = env.NECO_MESSAGES_CHANNEL;
-const WEATHER_API_URL: string = env.WEATHER_API_URL;
 
 //API and Task Constants
-const ALICANTE_COORDINATES: { latitude: number; longitude: number } = {
-  latitude: 38.26,
-  longitude: -0.71,
-};
+const WEATHER_API_URL: string = env.WEATHER_API_URL;
+
+const weatherCoordinates: Map<string, WeatherCoordinates> = new Map([
+  ["Alicante", { latitude: 38.3452, longitude: -0.4815 }],
+  ["Elche", { latitude: 38.2622, longitude: -0.7011 }],
+  ["Sant Boi", { latitude: 41.3436, longitude: 2.0366 }],
+  ["Santa Pola", { latitude: 38.1917, longitude: -0.5658 }],
+  // Additional cities can be added here
+]);
+
 const FORECAST_DAYS: number = 1;
 const DAILY_REQUESTED_PARAMS: string[] = [
   "weather_code",
@@ -24,7 +30,7 @@ const DAILY_REQUESTED_PARAMS: string[] = [
   "precipitation_probability_max",
 ];
 const TIMEZONE: string = "Europe/Madrid";
-const SCHEDULED_TIME: string = "20 15 * * *";
+const SCHEDULED_TIME: string = "00 12 * * *";
 
 /**
  * Registers a cron job to post a daily greeting message at 12:00 PM Madrid time
@@ -61,42 +67,35 @@ async function scheduledTask(client: Client): Promise<void> {
     }
 
     // Fetch and validate guild
-    const guild = client.guilds.cache.get(GUILD_ID);
+    const guild: Guild | undefined = client.guilds.cache.get(GUILD_ID);
     if (!guild) {
       const err = `Guild with ID ${GUILD_ID} not found in cache!`;
       throw new Error(err);
     }
 
     // Fetch and validate text-based channel
-    const channel = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
+    const channel: GuildBasedChannel | undefined = guild.channels.cache.get(MESSAGE_CHANNEL_ID);
     if (!channel || !channel.isTextBased()) {
       const err = `Channel with ID ${MESSAGE_CHANNEL_ID} not found or is not text-based!`;
       throw new Error(err);
     }
 
-    // Validate daily greeting messages
-    if (!Array.isArray(DAILY_MESSAGES) || DAILY_MESSAGES.length === 0) {
-      const err = "Daily greeting messages array is invalid or empty!";
-      throw new Error(err);
-    }
-
     // Initialize message service
-    const messageService = new MessageService(channel);
+    const messageService: MessageService = new MessageService(channel);
 
     // Determine today's index and fetch corresponding message
-    const dayIndex = new Date().getDay();
-    const dailyOptions = DAILY_MESSAGES[dayIndex];
-    const messageContent = dailyOptions[Math.floor(Math.random() * dailyOptions.length)];
+    const dayIndex: number = new Date().getDay();
+    const dailyOptions: string[] = DAILY_MESSAGES[dayIndex];
+    const messageContent: string = dailyOptions[Math.floor(Math.random() * dailyOptions.length)];
 
-    // Fetch weather data and build weather message
-    const weatherData = await fetchWeatherData();
-    const weatherMessage = buildWeatherMessage(weatherData);
-
-    // Validate message content
-    if (!messageContent) {
-      const err = "No message content found for today's greeting!";
+    if (!messageContent || messageContent.length === 0) {
+      const err = "No daily message found for today!";
       throw new Error(err);
     }
+
+    // Fetch weather data and build weather message
+    const weatherData: WeatherReport[] = await fetchWeatherData();
+    const weatherMessage: string = buildWeatherMessage(weatherData);
 
     if (!weatherMessage) {
       const err = "Failed to build weather message!";
@@ -113,62 +112,78 @@ async function scheduledTask(client: Client): Promise<void> {
   }
 }
 
-async function fetchWeatherData(): Promise<WeatherREST> {
-  const params: URLSearchParams = new URLSearchParams({
-    latitude: ALICANTE_COORDINATES.latitude.toString(),
-    longitude: ALICANTE_COORDINATES.longitude.toString(),
-    daily: DAILY_REQUESTED_PARAMS.join(","),
-    timezone: TIMEZONE,
-    forecast_days: FORECAST_DAYS.toString(),
+async function fetchWeatherData(): Promise<WeatherReport[]> {
+  const requests = Array.from(weatherCoordinates.entries()).map(([city, coordinates]) => ({
+    city,
+    requestedData: new URLSearchParams({
+      latitude: coordinates.latitude.toString(),
+      longitude: coordinates.longitude.toString(),
+      daily: DAILY_REQUESTED_PARAMS.join(","),
+      timezone: TIMEZONE,
+      forecast_days: FORECAST_DAYS.toString(),
+    }),
+  }));
+
+  const promises = requests.map(async (request) => {
+    const url = `${WEATHER_API_URL}?${request.requestedData.toString()}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch weather data for ${request.city}: ${response.statusText}`);
+    }
+
+    const data: WeatherREST = await response.json();
+
+    if (!data || !data.daily || !validateWeatherData(data)) {
+      throw new Error(
+        `Weather data for ${request.city} is empty, invalid or missing required properties`,
+      );
+    }
+
+    const promise: WeatherReport = {
+      city: request.city,
+      data,
+    };
+
+    return promise;
   });
 
-  const url: string = `${WEATHER_API_URL}?${params.toString()}`;
-
-  const response: Response = await fetch(url);
-
-  if (!response.ok) {
-    const err = `Failed to fetch weather data: ${response.statusText}`;
-    throw new Error(err);
-  }
-
-  const data: WeatherREST = await response.json();
-
-  if (!data || !data.daily) {
-    const err = `Weather data is empty or invalid`;
-    throw new Error(err);
-  }
-
-  if (!validateWeatherData(data)) {
-    const err = `Weather data is missing required daily properties`;
-    throw new Error(err);
-  }
-
-  return data;
+  return Promise.all(promises);
 }
 
-function buildWeatherMessage(weatherData: WeatherREST): string {
-  const rawWeatherData: RawWeatherData = {
-    date: weatherData.daily.time[0],
-    weatherCode: weatherData.daily.weather_code[0],
-    maxTemperature: weatherData.daily.temperature_2m_max[0],
-    minTemperature: weatherData.daily.temperature_2m_min[0],
-    precipitationProbability: weatherData.daily.precipitation_probability_max[0],
-  };
+function buildWeatherMessage(weatherData: WeatherReport[]): string {
+  const weatherMessages: string[] = weatherData.map((report) =>
+    formatWeatherMessage(report.city, report.data),
+  );
 
-  const weatherMessage = `
-  Hoy en Alicante:
-  - Clima: ${WEATHER_DESCRIPTIONS[rawWeatherData.weatherCode] || "Desconocido"}
-  - Temperatura Máxima: ${rawWeatherData.maxTemperature}°C
-  - Temperatura Mínima: ${rawWeatherData.minTemperature}°C
-  - Probabilidad de LLuvia: ${rawWeatherData.precipitationProbability}%
-  -# Quieres saber el clima de otra ciudad? Sugierelo para añadirlo!
-  `;
+  const footer = "-# Quieres saber el clima de otra ciudad? Sugierelo para añadirlo!";
 
-  return weatherMessage;
+  return `${weatherMessages.join("\n\n")}\n\n${footer}`;
+}
+
+function formatWeatherMessage(city: string, data: WeatherREST): string {
+  const date = new Date(data.daily.time[0]);
+  const weatherCode = data.daily.weather_code?.[0] ?? 0;
+  const maxTemp = data.daily.temperature_2m_max?.[0] ?? "N/A";
+  const minTemp = data.daily.temperature_2m_min?.[0] ?? "N/A";
+  const precipitationProb = data.daily.precipitation_probability_max?.[0] ?? "N/A";
+
+  const formattedDate = date.toLocaleDateString("es-ES", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  return `-# Clima en **${city}** para hoy (${formattedDate}):
+  - Condición: ${WEATHER_DESCRIPTIONS[weatherCode] || "Desconocida"}
+  - Temperatura Máxima: ${maxTemp}°C
+  - Temperatura Mínima: ${minTemp}°C
+  - Probabilidad de Precipitación: ${precipitationProb}%`;
 }
 
 function validateWeatherData(data: WeatherREST): boolean {
-  const requiredProps = [
+  const requiredProps: (keyof WeatherREST["daily"])[] = [
     "time",
     "weather_code",
     "temperature_2m_max",

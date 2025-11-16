@@ -1,4 +1,4 @@
-export interface WeatherREST {
+export default interface WeatherREST {
   latitude: number;
   longitude: number;
   generationtime_ms: number;
