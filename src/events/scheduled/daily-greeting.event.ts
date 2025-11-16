@@ -24,7 +24,7 @@ const DAILY_REQUESTED_PARAMS: string[] = [
   "precipitation_probability_max",
 ];
 const TIMEZONE: string = "Europe/Madrid";
-const SCHEDULED_TIME: string = "40 14 * * *";
+const SCHEDULED_TIME: string = "20 15 * * *";
 
 /**
  * Registers a cron job to post a daily greeting message at 12:00 PM Madrid time
