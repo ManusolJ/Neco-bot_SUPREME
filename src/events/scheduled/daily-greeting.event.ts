@@ -15,7 +15,6 @@ const MESSAGE_CHANNEL_ID: string = env.NECO_MESSAGES_CHANNEL;
 const WEATHER_API_URL: string = env.WEATHER_API_URL;
 
 const weatherCoordinates: Map<string, WeatherCoordinates> = new Map([
-  ["Alicante", { latitude: 38.3452, longitude: -0.4815 }],
   ["Elche", { latitude: 38.2622, longitude: -0.7011 }],
   ["Sant Boi", { latitude: 41.3436, longitude: 2.0366 }],
   ["Santa Pola", { latitude: 38.1917, longitude: -0.5658 }],
