@@ -70,6 +70,10 @@ export default function weeklyLottery(client: Client): void {
 // ───────────────────────────────────────────────────────────────────────────────
 export async function scheduledTask(client: Client): Promise<void> {
   try {
+    if (!CITY_POST_URL || !HELL_POST_URL || !UTOPIA_POST_URL) {
+      throw new Error("Missing required Reddit URL environment variables");
+    }
+
     if (!GUILD_ID || !MESSAGE_CHANNEL_ID) {
       throw new Error("Missing environment variables.");
     }
