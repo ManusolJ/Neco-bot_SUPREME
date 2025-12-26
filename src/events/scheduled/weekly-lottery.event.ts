@@ -354,6 +354,11 @@ async function fetchLoserPost(label: string): Promise<string> {
       throw new Error("Invalid loser post label.");
   }
 
+  if (!POST_URL) {
+    console.error(`Missing URL for ${label}`);
+    return FAILURE_IMAGE;
+  }
+
   const headers = {
     "User-Agent": REDDIT_USER_AGENT,
     Accept: "application/json",
