@@ -21,7 +21,7 @@ import NecoService from "@services/neco.service";
 const GUILD_ID = process.env.GUILD_ID;
 const CITY_POST_URL = process.env.LOSERCITY_URL;
 const HELL_POST_URL = process.env.LOSERHELL_URL;
-const PRISON_POST_URL = process.env.LOSERPRISON_URL;
+const UTOPIA_POST_URL = process.env.LOSERUTOPIA_URL;
 const REDDIT_USER_AGENT = "Necobot (by u/easytoremember1111)";
 const MESSAGE_CHANNEL_ID = process.env.NECO_MESSAGES_CHANNEL;
 
@@ -49,7 +49,7 @@ const MULTI_VAL: Record<"x2" | "x3" | "x5", number> = {
 // Themed loser posts per multiplier
 const LOSER_POST: Record<"x2" | "x3" | "x5", string> = {
   x2: "Losercity",
-  x3: "Loserprison",
+  x3: "Loserutopia",
   x5: "Loserhell",
 };
 
@@ -96,7 +96,7 @@ export async function scheduledTask(client: Client): Promise<void> {
     const lotteryMsg =
       "Elige tu multiplicador: **x2**, **x3** o **x5**.\n" +
       "Si ganas, ¡te llevarás una fortuna multiplicada!\n" +
-      "Si pierdes... tendrás un destino peor que la ruina: un post directo desde **Losercity**, **Loserprison** o **Loserhell**.\n" +
+      "Si pierdes... tendrás un destino peor que la ruina: un post directo desde **Losercity**, **Loserutopia** o **Loserhell**.\n" +
       "La ventanilla de apuestas estará abierta durante **15 minutos**.\n" +
       "-# Aviso: Necobot no se hace responsable de cualquier daño mental recibido a consecuencia del post recibido. Loserhell tiene cosas HORRIBLES!";
     await messageService.send(lotteryMsg);
@@ -340,8 +340,8 @@ async function fetchLoserPost(label: string): Promise<string> {
     case "Losercity":
       POST_URL = CITY_POST_URL;
       break;
-    case "Loserprison":
-      POST_URL = PRISON_POST_URL;
+    case "Loserutopia":
+      POST_URL = UTOPIA_POST_URL;
       break;
     case "Loserhell":
       POST_URL = HELL_POST_URL;
