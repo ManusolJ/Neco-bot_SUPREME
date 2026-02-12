@@ -339,7 +339,7 @@ async function applyLoser(guild: Guild, userId: string, label: string) {
 }
 
 async function fetchLoserPost(label: string): Promise<string> {
-  let POST_URL = "";
+  let POST_URL;
   switch (label) {
     case "Losercity":
       POST_URL = CITY_POST_URL;
